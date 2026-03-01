@@ -440,7 +440,7 @@ const WelcomeScreen = ({dispatch}) => {
       <p style={{fontSize:12,letterSpacing:2,textTransform:"uppercase",color:"rgba(255,255,255,0.3)",fontWeight:500,marginBottom:20}}>An Infinitely Scalable Network</p>
       <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 16px",borderRadius:100,fontSize:12,fontWeight:600,letterSpacing:1.5,textTransform:"uppercase",color:"#ff6ec7",background:"rgba(255,110,199,0.06)",border:"1px solid rgba(255,110,199,0.15)",marginBottom:16}}>✦ Community Quiz ✦</div>
       <p style={{fontSize:16,color:"#94A3B8",lineHeight:1.7,maxWidth:440,margin:"0 auto 36px"}}>Test your knowledge of Pi Squared's technology, team, and ecosystem across three levels of difficulty.</p>
-      <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:28}}>
+      <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:28,maxWidth:480,margin:"0 auto 28px"}}>
         {[["30","Questions"],["3","Levels"],["20s","Per Question"],["🏆","Certificate"]].map(([v,l],i)=>(
           <div key={i} style={{padding:"10px 18px",borderRadius:12,background:"rgba(100,50,200,0.1)",border:"1px solid rgba(120,80,220,0.2)",fontSize:13,color:"#94A3B8"}}><span style={{color:"#F1F5F9",fontWeight:700,marginRight:5}}>{v}</span>{l}</div>
         ))}
@@ -1126,7 +1126,7 @@ const CertificateScreen = ({state,dispatch}) => {
   };
 
   const shareToX = () => {
-    const text = `I scored ${pct}% on the Pi² Network Quiz and earned "${tier.title}" ${tier.emoji}${state.attempt > 1 ? ` on attempt #${state.attempt}` : ""}!\n\nThink you can beat me? Take the quiz 👇\n[Add your quiz link here]\n\n@Pi2_Labs @PiSquared`;
+    const text = `I scored ${pct}% on the Pi² Network Quiz and earned "${tier.title}" ${tier.emoji}${state.attempt > 1 ? ` on attempt #${state.attempt}` : ""}!\n\nThink you can beat me? Take the quiz 👇\npi2-quiz.vercel.app\n\n@Pi2_Labs @PiSquared`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
