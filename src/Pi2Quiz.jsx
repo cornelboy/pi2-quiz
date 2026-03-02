@@ -877,8 +877,10 @@ const CertificateScreen = ({ state, dispatch }) => {
     c.width = W * SCALE; c.height = H * SCALE;
     ctx.scale(SCALE, SCALE);
 
-    const GOLD = "#DAA520";
-    const GOLD_LIGHT = "#E8C252";
+    const ACCENT = "#A855F7";
+    const ACCENT_LIGHT = "#C084FC";
+    const CYAN = "#22D3EE";
+    const PINK = "#ff2d95";
     const WHITE = "#FFFFFF";
 
     const bg = new Image();
@@ -890,70 +892,98 @@ const CertificateScreen = ({ state, dispatch }) => {
       ctx.textAlign = "center";
 
       // ═══════════════════════════════════════════════════════
+      // Faded watermark seal (subtle background element)
+      // ═══════════════════════════════════════════════════════
+      const sealX = W / 2, sealY = 680, sealR = 90;
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      // Outer circle
+      ctx.strokeStyle = ACCENT;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(sealX, sealY, sealR, 0, Math.PI * 2); ctx.stroke();
+      // Inner circle
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(sealX, sealY, sealR - 14, 0, Math.PI * 2); ctx.stroke();
+      // Starburst rays
+      for (let i = 0; i < 24; i++) {
+        const angle = (i / 24) * Math.PI * 2;
+        const innerR = sealR - 12, outerR = sealR + 4;
+        ctx.beginPath();
+        ctx.moveTo(sealX + Math.cos(angle) * innerR, sealY + Math.sin(angle) * innerR);
+        ctx.lineTo(sealX + Math.cos(angle) * outerR, sealY + Math.sin(angle) * outerR);
+        ctx.stroke();
+      }
+      // π² text inside seal
+      ctx.globalAlpha = 0.14;
+      ctx.font = "600 48px 'Outfit', sans-serif";
+      ctx.fillStyle = ACCENT;
+      ctx.fillText("π²", sealX, sealY + 16);
+      ctx.restore();
+
+      // ═══════════════════════════════════════════════════════
       // ZONE 1 — Clear zone BETWEEN the two filigree dividers
-      // First divider lines end at ~y=150, second starts at ~y=200
       // ═══════════════════════════════════════════════════════
 
       ctx.save();
-      ctx.shadowColor = "rgba(218,165,32,0.4)"; ctx.shadowBlur = 12;
+      ctx.shadowColor = "rgba(168,85,247,0.5)"; ctx.shadowBlur = 14;
       ctx.font = "600 30px 'Outfit', sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
-      ctx.fillText("C E R T I F I C A T E", W / 2, 190);
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillText("C E R T I F I C A T E", W / 2, 198);
       ctx.restore();
 
       ctx.save();
-      ctx.shadowColor = "rgba(218,165,32,0.3)"; ctx.shadowBlur = 10;
+      ctx.shadowColor = "rgba(255,45,149,0.4)"; ctx.shadowBlur = 10;
       ctx.font = "600 14px 'Outfit', sans-serif";
-      ctx.fillStyle = GOLD;
-      ctx.fillText("O F   A C H I E V E M E N T", W / 2, 213);
+      ctx.fillStyle = PINK;
+      ctx.fillText("O F   A C H I E V E M E N T", W / 2, 221);
       ctx.restore();
 
       // ═══════════════════════════════════════════════════════
-      // ZONE 2 — Below second filigree divider (divider ends ~y=250)
+      // ZONE 2 — Below second filigree divider
       // ═══════════════════════════════════════════════════════
 
       ctx.font = "500 13px 'Outfit', sans-serif";
       ctx.fillStyle = "rgba(255,255,255,0.35)";
-      ctx.fillText("P R O U D L Y   P R E S E N T E D   T O", W / 2, 312);
+      ctx.fillText("P R O U D L Y   P R E S E N T E D   T O", W / 2, 330);
 
       // Username — glow pass
       ctx.save();
-      ctx.shadowColor = GOLD; ctx.shadowBlur = 45;
+      ctx.shadowColor = "rgba(168,85,247,0.6)"; ctx.shadowBlur = 45;
       ctx.font = "italic 800 58px 'Georgia', serif";
       ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.fillText(displayName, W / 2, 380);
+      ctx.fillText(displayName, W / 2, 392);
       ctx.restore();
       // Username — solid pass
       ctx.save();
-      ctx.shadowColor = "rgba(218,165,32,0.4)"; ctx.shadowBlur = 12;
+      ctx.shadowColor = "rgba(168,85,247,0.4)"; ctx.shadowBlur = 12;
       ctx.font = "italic 800 58px 'Georgia', serif";
       ctx.fillStyle = WHITE;
-      ctx.fillText(displayName, W / 2, 380);
+      ctx.fillText(displayName, W / 2, 392);
       ctx.restore();
 
-      // Gold underline beneath name
+      // Purple underline beneath name
       const nameW = ctx.measureText(displayName).width || 200;
       const lineHalf = Math.min(nameW / 2 + 50, 420);
       const ulGrad = ctx.createLinearGradient(W / 2 - lineHalf, 0, W / 2 + lineHalf, 0);
       ulGrad.addColorStop(0, "transparent");
-      ulGrad.addColorStop(0.15, "rgba(218,165,32,0.35)");
-      ulGrad.addColorStop(0.5, GOLD);
-      ulGrad.addColorStop(0.85, "rgba(218,165,32,0.35)");
+      ulGrad.addColorStop(0.15, "rgba(168,85,247,0.3)");
+      ulGrad.addColorStop(0.5, ACCENT);
+      ulGrad.addColorStop(0.85, "rgba(168,85,247,0.3)");
       ulGrad.addColorStop(1, "transparent");
       ctx.strokeStyle = ulGrad; ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(W / 2 - lineHalf, 408);
-      ctx.lineTo(W / 2 + lineHalf, 408);
+      ctx.moveTo(W / 2 - lineHalf, 420);
+      ctx.lineTo(W / 2 + lineHalf, 420);
       ctx.stroke();
 
       // ═══════════════════════════════════════════════════════
       // ZONE 3 — Center content area
       // ═══════════════════════════════════════════════════════
 
-      ctx.font = "italic 400 16px 'Outfit', sans-serif";
+      ctx.font = "italic 400 24px 'Outfit', sans-serif";
       ctx.fillStyle = "rgba(255,255,255,0.55)";
       const achWords = tier.achievement.split(" ");
-      let achLine = "", achY = 480;
+      let achLine = "", achY = 490;
       achWords.forEach(w => {
         const test = achLine + w + " ";
         if (ctx.measureText(test).width > 620) {
@@ -964,10 +994,10 @@ const CertificateScreen = ({ state, dispatch }) => {
       ctx.fillText(achLine.trim(), W / 2, achY);
 
       // Tier title
-      const titleY = achY + 55;
+      const titleY = achY + 70;
       ctx.save();
-      ctx.shadowColor = "rgba(218,165,32,0.25)"; ctx.shadowBlur = 16;
-      ctx.font = "700 38px 'Outfit', sans-serif";
+      ctx.shadowColor = "rgba(168,85,247,0.3)"; ctx.shadowBlur = 16;
+      ctx.font = "700 42px 'Outfit', sans-serif";
       ctx.fillStyle = WHITE;
       ctx.fillText(`${tier.emoji}  ${tier.title}  ${tier.emoji}`, W / 2, titleY);
       ctx.restore();
@@ -976,13 +1006,13 @@ const CertificateScreen = ({ state, dispatch }) => {
       // ZONE 4 — Score (above seal area)
       // ═══════════════════════════════════════════════════════
 
-      const scoreY = titleY + 52;
+      const scoreY = titleY + 84;
       ctx.font = "italic 600 18px 'JetBrains Mono', monospace";
-      ctx.fillStyle = GOLD_LIGHT;
+      ctx.fillStyle = CYAN;
       ctx.fillText(`${pct}%  ·  ${state.score}/${QUESTIONS.length} correct  ·  Attempt #${state.attempt}`, W / 2, scoreY);
 
       // ═══════════════════════════════════════════════════════
-      // ZONE 5 — Footnote BELOW the gold seal (seal bottom ~y=740)
+      // ZONE 5 — Footnote BELOW the seal
       // ═══════════════════════════════════════════════════════
 
       ctx.font = "500 12px 'Outfit', sans-serif";
