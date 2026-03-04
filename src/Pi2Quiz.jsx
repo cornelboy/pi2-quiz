@@ -1,9 +1,17 @@
 import { useState, useEffect, useReducer, useCallback, useRef, useMemo } from "react";
 
-const fontLink = document.createElement("link");
-fontLink.href = "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap";
-fontLink.rel = "stylesheet";
-document.head.appendChild(fontLink);
+// Load Geist fonts from CDN + Inter fallback
+["https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/style.css",
+  "https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/style.css",
+  "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+].forEach(href => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; document.head.appendChild(l); });
+
+// Brand design tokens
+const BRAND = {
+  dark: "#1A1A1A", light: "#FAF9F0", lavender: "#D8D2FA", teal: "#D5FAD3", error: "#E57373",
+  sans: "'Geist Sans', 'Inter', system-ui, -apple-system, sans-serif",
+  mono: "'Geist Mono', 'JetBrains Mono', monospace",
+};
 
 const QUESTIONS = [
   { id: "b1", difficulty: "beginner", text: "What does Pi2 Network describe itself as?", options: ["A social media blockchain", "A traditional blockchain", "An infinitely scalable network", "A centralized exchange"], correct: 2, explanation: "Pi2 is building an infinitely scalable network that goes beyond traditional blockchain limitations." },
@@ -47,9 +55,9 @@ const TIERS = [
 ];
 
 const DIFF_META = {
-  beginner: { label: "Beginner", color: "#34D399", bg: "rgba(52,211,153,0.1)", border: "rgba(52,211,153,0.25)", icon: "🌱" },
-  intermediate: { label: "Intermediate", color: "#FBBF24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.25)", icon: "⚡" },
-  advanced: { label: "Advanced", color: "#F87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.25)", icon: "🔥" },
+  beginner: { label: "Beginner", color: BRAND.teal, bg: "rgba(213,250,211,0.06)", border: "rgba(213,250,211,0.12)", icon: "●" },
+  intermediate: { label: "Intermediate", color: BRAND.lavender, bg: "rgba(216,210,250,0.06)", border: "rgba(216,210,250,0.12)", icon: "●" },
+  advanced: { label: "Advanced", color: BRAND.light, bg: "rgba(250,249,240,0.06)", border: "rgba(250,249,240,0.12)", icon: "●" },
 };
 
 const initialState = { screen: "welcome", currentQ: 0, score: 0, answers: [], selected: null, showFeedback: false, timeLeft: 20, timerActive: false, username: "", usernameType: "twitter", attempt: 1 };
@@ -90,366 +98,328 @@ const injectStyles = () => {
   if (document.getElementById("pi2-quiz-styles")) return;
   const s = document.createElement("style"); s.id = "pi2-quiz-styles";
   s.textContent = `
-    @keyframes synthGridScroll {
-      0% { transform: perspective(400px) rotateX(62deg) translateY(0); }
-      100% { transform: perspective(400px) rotateX(62deg) translateY(80px); }
-    }
-    @keyframes horizonPulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-    @keyframes starTwinkle {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.7; }
-    }
-    @keyframes pi2SlideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes pi2SlideIn { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes pi2SlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes pi2FadeIn { from{opacity:0} to{opacity:1} }
-    @keyframes pi2Shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
-    @keyframes pi2CorrectPulse { 0%{box-shadow:0 0 0 0 rgba(52,211,153,0.4)} 70%{box-shadow:0 0 0 12px rgba(52,211,153,0)} 100%{box-shadow:0 0 0 0 rgba(52,211,153,0)} }
-    @keyframes pi2TimerPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
-    @keyframes pi2ScoreCount { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
-    @keyframes pi2Confetti { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(400px) rotate(720deg);opacity:0} }
-    @keyframes scanLine { 0%{transform:translateY(-100vh)} 100%{transform:translateY(100vh)} }
-    @keyframes logoFadeScale { 0%{opacity:0;transform:scale(0.7)} 60%{opacity:1;transform:scale(1.05)} 100%{opacity:1;transform:scale(1)} }
-    @keyframes logoGlow { 0%,100%{filter:drop-shadow(0 0 8px rgba(168,85,247,0.3)) drop-shadow(0 0 20px rgba(255,45,149,0.1))} 50%{filter:drop-shadow(0 0 16px rgba(168,85,247,0.5)) drop-shadow(0 0 40px rgba(255,45,149,0.2))} }
-    @keyframes borderRotate { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-    @keyframes sparkleFloat {
-      0%{transform:translateY(0) scale(1);opacity:0}
-      10%{opacity:1}
-      90%{opacity:1}
-      100%{transform:translateY(-120px) scale(0);opacity:0}
-    }
-    @keyframes ringExpand {
-      0%{transform:translate(-50%,-50%) scale(0.8);opacity:0.4}
-      100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}
-    }
-    @keyframes avatarFloat {
-      0%,100%{transform:translateY(0)}
-      50%{transform:translateY(-8px)}
-    }
-    @keyframes inputGlow {
-      0%,100%{box-shadow:0 0 15px rgba(124,58,237,0.15),0 0 30px rgba(255,45,149,0.05)}
-      50%{box-shadow:0 0 25px rgba(124,58,237,0.3),0 0 50px rgba(255,45,149,0.1)}
-    }
-    @keyframes piSpin {
-      0%{transform:rotate(0deg)}
-      100%{transform:rotate(360deg)}
-    }
-    @keyframes piSpinGlow {
-      0%,100%{filter:drop-shadow(0 0 12px rgba(168,85,247,0.4)) drop-shadow(0 0 30px rgba(255,45,149,0.15))}
-      50%{filter:drop-shadow(0 0 24px rgba(168,85,247,0.6)) drop-shadow(0 0 50px rgba(255,45,149,0.25))}
-    }
-    @keyframes loadDots {
-      0%{content:''}20%{content:'.'}40%{content:'..'}60%{content:'...'}80%{content:'...'}100%{content:''}
-    }
-    @keyframes loadBarFill {
-      0%{width:0%}
-      100%{width:100%}
-    }
-    @keyframes loadFadeOut {
-      0%{opacity:1;transform:scale(1)}
-      100%{opacity:0;transform:scale(1.1)}
-    }
-    .pi2-shake{animation:pi2Shake 0.5s ease-in-out} .pi2-correct-pulse{animation:pi2CorrectPulse 0.6s ease-out}
+    @keyframes pi2Shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+    @keyframes pi2TimerPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    @keyframes pi2ScoreCount { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+    @keyframes loadBarFill { 0%{width:0%} 100%{width:100%} }
+    @keyframes loadFadeOut { 0%{opacity:1} 100%{opacity:0} }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .pi2-shake{animation:pi2Shake 0.4s ease-in-out}
   `;
   document.head.appendChild(s);
 };
 
-// ─── SYNTHWAVE GRID BACKGROUND (portal.pi2.network style) ────────────────────
-const SynthwaveBackground = () => {
-  const stars = useMemo(() => Array.from({ length: 60 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 45}%`,
-    size: Math.random() * 2 + 0.5,
-    delay: `${Math.random() * 5}s`,
-    duration: `${2 + Math.random() * 4}s`,
-  })), []);
+// ─── ANIMATED BACKGROUND — CONSTELLATION NETWORK ─────────────────────────────
+const MinimalBackground = () => {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animId, time = 0;
+
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    const onMouse = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
+    window.addEventListener("mousemove", onMouse);
+
+    const COLORS = [
+      { r: 216, g: 210, b: 250 }, // lavender
+      { r: 213, g: 250, b: 211 }, // teal
+      { r: 250, g: 249, b: 240 }, // cream
+    ];
+    const rgba = (c, a) => `rgba(${c.r},${c.g},${c.b},${a})`;
+
+    // ── Layered nodes ──
+    const LAYERS = [
+      { count: 14, speedMul: 0.15, sizeMul: 0.55, alphaMul: 0.35, connectDist: 220 }, // far
+      { count: 18, speedMul: 0.4, sizeMul: 0.8, alphaMul: 0.65, connectDist: 280 }, // mid
+      { count: 10, speedMul: 0.8, sizeMul: 1.0, alphaMul: 1.0, connectDist: 340 }, // near
+    ];
+
+    const nodes = [];
+    LAYERS.forEach((layer, li) => {
+      for (let i = 0; i < layer.count; i++) {
+        const col = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const baseR = (2.5 + Math.random() * 3) * layer.sizeMul;
+        nodes.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.4 * layer.speedMul,
+          vy: (Math.random() - 0.5) * 0.4 * layer.speedMul,
+          r: baseR,
+          color: col,
+          alpha: (0.3 + Math.random() * 0.5) * layer.alphaMul,
+          pulseOffset: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.6 + Math.random() * 1.0,
+          layer: li,
+          connectDist: layer.connectDist,
+          // "signal" travelling along edges
+          signalTimer: Math.random() * 8,
+          signalInterval: 4 + Math.random() * 10,
+        });
+      }
+    });
+
+    // Travelling signals — data packets flowing along edges
+    const signals = [];
+    const spawnSignal = (fromNode, toNode) => {
+      signals.push({
+        from: fromNode,
+        to: toNode,
+        t: 0, // 0 → 1 progress
+        speed: 0.008 + Math.random() * 0.012,
+        color: fromNode.color,
+        alpha: 0.55 + Math.random() * 0.25,
+      });
+    };
+
+    const draw = () => {
+      time += 0.016;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // ── Ambient radial gradient ──
+      const cx = canvas.width / 2, cy = canvas.height * 0.4;
+      const pulseR = 480 + Math.sin(time * 0.3) * 60;
+      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, pulseR);
+      grd.addColorStop(0, `rgba(216,210,250,${0.022 + Math.sin(time * 0.25) * 0.008})`);
+      grd.addColorStop(0.45, `rgba(213,250,211,${0.006 + Math.sin(time * 0.35) * 0.003})`);
+      grd.addColorStop(1, "transparent");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // ── Mouse proximity glow ──
+      const mGrd = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 160);
+      mGrd.addColorStop(0, "rgba(216,210,250,0.04)");
+      mGrd.addColorStop(1, "transparent");
+      ctx.fillStyle = mGrd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // ── Update nodes & collect live edges ──
+      const liveEdges = [];
+      nodes.forEach(n => {
+        // Drift
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < -30) n.x = canvas.width + 30;
+        if (n.x > canvas.width + 30) n.x = -30;
+        if (n.y < -30) n.y = canvas.height + 30;
+        if (n.y > canvas.height + 30) n.y = -30;
+
+        // Gentle mouse repulsion for near-layer nodes
+        if (n.layer === 2) {
+          const mdx = n.x - mouse.x, mdy = n.y - mouse.y;
+          const md = Math.sqrt(mdx * mdx + mdy * mdy);
+          if (md < 150 && md > 0) {
+            const f = (1 - md / 150) * 0.6;
+            n.x += (mdx / md) * f;
+            n.y += (mdy / md) * f;
+          }
+        }
+
+        // Signal spawning
+        n.signalTimer += 0.016;
+        if (n.signalTimer > n.signalInterval) {
+          n.signalTimer = 0;
+          n.signalInterval = 4 + Math.random() * 10;
+          // find a neighbour to send to
+          const neighbours = nodes.filter(m => m !== n && (function () {
+            const d = Math.hypot(m.x - n.x, m.y - n.y);
+            return d < n.connectDist;
+          })());
+          if (neighbours.length > 0 && signals.length < 40) {
+            const target = neighbours[Math.floor(Math.random() * neighbours.length)];
+            spawnSignal(n, target);
+          }
+        }
+      });
+
+      // ── Draw edges ──
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          // Only connect same or adjacent layers
+          if (Math.abs(a.layer - b.layer) > 1) continue;
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const maxDist = Math.min(a.connectDist, b.connectDist);
+          if (dist < maxDist) {
+            const proximity = 1 - dist / maxDist;
+            const edgeAlpha = proximity * 0.07 * ((a.alpha + b.alpha) / 2);
+            const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+            grad.addColorStop(0, rgba(a.color, edgeAlpha));
+            grad.addColorStop(0.5, rgba(a.color, edgeAlpha * 1.5));
+            grad.addColorStop(1, rgba(b.color, edgeAlpha));
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 0.5 + proximity * 0.5;
+            ctx.stroke();
+
+            liveEdges.push({ a, b, proximity });
+          }
+        }
+      }
+
+      // ── Draw nodes (back to front) ──
+      [...nodes].sort((a, b) => a.layer - b.layer).forEach(n => {
+        const pulse = Math.sin(time * n.pulseSpeed + n.pulseOffset);
+        const r = n.r * (1 + pulse * 0.18);
+        const a = n.alpha * (0.85 + pulse * 0.15);
+
+        // Outer halo glow (two rings)
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r * 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(n.color, a * 0.06);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r * 3, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(n.color, a * 0.14);
+        ctx.fill();
+
+        // Core node with canvas shadow glow
+        ctx.save();
+        ctx.shadowColor = rgba(n.color, a * 0.8);
+        ctx.shadowBlur = 10 + n.layer * 4;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(n.color, a);
+        ctx.fill();
+        ctx.restore();
+
+        // Bright centre dot
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(n.color, Math.min(a * 1.6, 1));
+        ctx.fill();
+      });
+
+      // ── Travelling signals (data packets) ──
+      for (let s = signals.length - 1; s >= 0; s--) {
+        const sig = signals[s];
+        sig.t += sig.speed;
+        if (sig.t >= 1) { signals.splice(s, 1); continue; }
+
+        const x = sig.from.x + (sig.to.x - sig.from.x) * sig.t;
+        const y = sig.from.y + (sig.to.y - sig.from.y) * sig.t;
+        const eased = Math.sin(sig.t * Math.PI); // fade in/out
+
+        // Glow trail
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(sig.color, sig.alpha * eased * 0.25);
+        ctx.fill();
+
+        // Core bright dot
+        ctx.save();
+        ctx.shadowColor = rgba(sig.color, sig.alpha * eased);
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(sig.color, sig.alpha * eased);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMouse);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", background: "#000000" }}>
-      {/* Top dark-to-purple gradient (sky) */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: "55%",
-        background: "linear-gradient(180deg, #000000 0%, #05010d 30%, #0d0520 55%, #1a0a3e 80%, #2d1266 100%)",
-      }} />
-
-      {/* Stars in the sky area */}
-      {stars.map(s => (
-        <div key={s.id} style={{
-          position: "absolute", left: s.left, top: s.top,
-          width: s.size, height: s.size, borderRadius: "50%",
-          background: "#fff",
-          animation: `starTwinkle ${s.duration} ease-in-out infinite`,
-          animationDelay: s.delay,
-        }} />
-      ))}
-
-      {/* Horizon glow — subtle purple line */}
-      <div style={{
-        position: "absolute", top: "48%", left: 0, right: 0, height: 2,
-        background: "linear-gradient(90deg, transparent 10%, rgba(100,60,230,0.4) 30%, rgba(120,80,255,0.5) 50%, rgba(100,60,230,0.4) 70%, transparent 90%)",
-        boxShadow: "0 0 20px 4px rgba(100,60,230,0.15), 0 0 60px 12px rgba(100,60,230,0.08)",
-        zIndex: 2,
-      }} />
-
-      {/* Secondary horizon lines */}
-      <div style={{
-        position: "absolute", top: "46.5%", left: 0, right: 0, height: 1,
-        background: "linear-gradient(90deg, transparent 10%, rgba(100,60,230,0.15) 30%, rgba(100,60,230,0.08) 50%, rgba(100,60,230,0.15) 70%, transparent 90%)",
-      }} />
-      <div style={{
-        position: "absolute", top: "49.5%", left: 0, right: 0, height: 1,
-        background: "linear-gradient(90deg, transparent 10%, rgba(80,50,200,0.15) 30%, rgba(80,50,200,0.08) 50%, rgba(80,50,200,0.15) 70%, transparent 90%)",
-      }} />
-
-      {/* THE GRID — perspective floor scrolling toward viewer */}
-      <div style={{
-        position: "absolute", top: "48%", left: 0, right: 0, bottom: 0,
-        overflow: "hidden",
-      }}>
-        <div style={{
-          position: "absolute", top: 0, left: "-50%", width: "200%", height: "300%",
-          backgroundImage: `
-            linear-gradient(rgba(80,50,220,0.55) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(80,50,220,0.35) 1px, transparent 1px)
-          `,
-          backgroundSize: "80px 80px",
-          animation: "synthGridScroll 4s linear infinite",
-          transformOrigin: "top center",
-        }} />
-      </div>
-
-      {/* Vertical convergence lines (vanishing point rays) */}
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1, pointerEvents: "none" }} viewBox="0 0 1000 1000" preserveAspectRatio="none">
-        {/* Radial lines from vanishing point */}
-        {Array.from({ length: 20 }, (_, i) => {
-          const x = (i / 19) * 1000;
-          return <line key={i} x1="500" y1="480" x2={x} y2="1000"
-            stroke="rgba(100,60,230,0.2)" strokeWidth="0.8" />;
-        })}
-      </svg>
-
-      {/* Horizontal purple accent lines across the grid */}
-      {[52, 58, 66, 76, 90].map((top, i) => (
-        <div key={i} style={{
-          position: "absolute", top: `${top}%`, left: 0, right: 0,
-          height: i === 0 ? 2 : 1,
-          background: `linear-gradient(90deg, transparent 5%, rgba(100,60,230,${0.2 - i * 0.025}) 25%, rgba(100,60,230,${0.1 - i * 0.012}) 50%, rgba(100,60,230,${0.2 - i * 0.025}) 75%, transparent 95%)`,
-          zIndex: 1,
-        }} />
-      ))}
-
-      {/* Purple ambient glow in the center */}
-      <div style={{
-        position: "absolute", top: "35%", left: "50%", transform: "translate(-50%,-50%)",
-        width: 600, height: 300, borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(100,40,200,0.15), transparent 70%)",
-        filter: "blur(40px)", zIndex: 1,
-      }} />
-
-      {/* Subtle scan line effect */}
-      <div style={{
-        position: "absolute", inset: 0,
-        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)",
-        pointerEvents: "none", zIndex: 3,
-      }} />
-
-      {/* Vignette */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse 70% 70% at 50% 50%, transparent 30%, rgba(0,0,0,0.5) 100%)",
-        pointerEvents: "none", zIndex: 3,
-      }} />
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, background: BRAND.dark }}>
+      <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
     </div>
   );
 };
 
-const Confetti = () => {
-  const pieces = useMemo(() => Array.from({ length: 40 }, (_, i) => ({ id: i, left: `${Math.random() * 100}%`, color: ["#A855F7", "#22D3EE", "#34D399", "#FBBF24", "#F87171", "#818CF8"][i % 6], delay: `${Math.random() * 2}s`, duration: `${2 + Math.random() * 2}s`, size: `${6 + Math.random() * 6}px` })), []);
-  return <div style={{ position: "fixed", inset: 0, zIndex: 100, pointerEvents: "none", overflow: "hidden" }}>{pieces.map(p => <div key={p.id} style={{ position: "absolute", top: "-10px", left: p.left, width: p.size, height: p.size, backgroundColor: p.color, borderRadius: Math.random() > 0.5 ? "50%" : "2px", animation: `pi2Confetti ${p.duration} ease-out forwards`, animationDelay: p.delay }} />)}</div>;
-};
-
-const Glass = ({ children, style = {}, ...props }) => <div style={{ background: "rgba(10,5,25,0.65)", border: "1px solid rgba(120,80,220,0.2)", borderRadius: 20, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", ...style }} {...props}>{children}</div>;
+const Card = ({ children, style = {}, ...props }) => <div style={{ background: "rgba(250,249,240,0.04)", border: "1px solid rgba(250,249,240,0.08)", borderRadius: 12, ...style }} {...props}>{children}</div>;
 
 const TimerRing = ({ timeLeft, total = 20 }) => {
   const pct = timeLeft / total; const circ = 2 * Math.PI * 22; const off = circ * (1 - pct);
   const isCrit = timeLeft <= 5; const isLow = timeLeft <= 10;
-  const color = isCrit ? "#EF4444" : isLow ? "#FBBF24" : "#22D3EE";
+  const color = isCrit ? BRAND.error : isLow ? BRAND.lavender : BRAND.light;
   return (
     <div style={{ position: "relative", width: 56, height: 56, animation: isCrit ? "pi2TimerPulse 0.5s ease-in-out infinite" : "none" }}>
       <svg width={56} height={56} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
+        <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(250,249,240,0.06)" strokeWidth={4} />
         <circle cx={28} cy={28} r={22} fill="none" stroke={color} strokeWidth={4} strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round" style={{ transition: "stroke-dashoffset 1s linear,stroke 0.3s" }} />
       </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 700, color }}>{timeLeft}</div>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: BRAND.mono, fontSize: 16, fontWeight: 600, color }}>{timeLeft}</div>
     </div>
   );
 };
 
 const ProgressBar = ({ current, total }) => (
-  <div style={{ width: "100%", height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-    <div style={{ height: "100%", borderRadius: 3, background: "linear-gradient(90deg,#A855F7,#22D3EE)", width: `${(current / total) * 100}%`, transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)" }} />
+  <div style={{ width: "100%", height: 4, borderRadius: 2, background: "rgba(250,249,240,0.06)", overflow: "hidden" }}>
+    <div style={{ height: "100%", borderRadius: 2, background: BRAND.lavender, width: `${(current / total) * 100}%`, transition: "width 0.4s ease" }} />
   </div>
 );
 
-const DiffBadge = ({ difficulty }) => { const m = DIFF_META[difficulty]; return <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 100, fontSize: 12, fontWeight: 600, letterSpacing: 0.5, color: m.color, background: m.bg, border: `1px solid ${m.border}` }}>{m.icon} {m.label}</span>; };
+const DiffBadge = ({ difficulty }) => { const m = DIFF_META[difficulty]; return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: m.color, background: m.bg, border: `1px solid ${m.border}` }}>{m.icon} {m.label}</span>; };
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SCREENS
 // ═════════════════════════════════════════════════════════════════════════════
 
 const WelcomeScreen = ({ dispatch }) => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const W = 280, H = 120;
-    canvas.width = W * 2; canvas.height = H * 2;
-    canvas.style.width = W + "px"; canvas.style.height = H + "px";
-    ctx.scale(2, 2);
-
-    // Draw target text to get pixel positions
-    ctx.font = "300 80px 'Outfit', sans-serif";
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("π", W / 2 - 10, H / 2 + 5);
-    ctx.font = "300 38px 'Outfit', sans-serif";
-    ctx.fillText("2", W / 2 + 45, H / 2 - 18);
-
-    // Sample target pixels
-    const imgData = ctx.getImageData(0, 0, W * 2, H * 2);
-    const targets = [];
-    for (let y = 0; y < H * 2; y += 4) {
-      for (let x = 0; x < W * 2; x += 4) {
-        const i = (y * W * 2 + x) * 4;
-        if (imgData.data[i + 3] > 128) {
-          targets.push({ x: x / 2, y: y / 2 });
-        }
-      }
-    }
-
-    // Create particles at random positions
-    const particles = targets.map(t => ({
-      x: Math.random() * W, y: Math.random() * H,
-      tx: t.x, ty: t.y,
-      vx: 0, vy: 0,
-      color: Math.random() < 0.3 ? `hsl(${270 + Math.random() * 60}, 80%, ${60 + Math.random() * 30}%)` : `rgba(255,255,255,${0.5 + Math.random() * 0.5})`,
-      size: 1 + Math.random() * 1.2,
-      arrived: false,
-    }));
-
-    let frame = 0;
-    const assembleFrames = 120; // ~2s to assemble
-    const holdFrames = 30; // ~0.5s hold as particles
-    const dissolveFrames = 60; // ~1s dissolve to clean text
-    const totalFrames = assembleFrames + holdFrames + dissolveFrames;
-    let glowPhase = 0;
-    let animId;
-
-    const drawCleanLogo = (alpha, glowAmount) => {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.shadowColor = "rgba(168,85,247,0.5)";
-      ctx.shadowBlur = glowAmount;
-      ctx.font = "300 80px 'Outfit', sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("π", W / 2 - 10, H / 2 + 5);
-      ctx.font = "300 38px 'Outfit', sans-serif";
-      const grad = ctx.createLinearGradient(W / 2 + 20, 0, W / 2 + 65, H / 2);
-      grad.addColorStop(0, "rgba(168,85,247,1)");
-      grad.addColorStop(0.5, "rgba(255,110,199,1)");
-      grad.addColorStop(1, "rgba(34,211,238,1)");
-      ctx.fillStyle = grad;
-      ctx.fillText("2", W / 2 + 45, H / 2 - 18);
-      ctx.shadowBlur = 0;
-      ctx.restore();
-    };
-
-    const animate = () => {
-      ctx.clearRect(0, 0, W, H);
-      frame++;
-
-      const assembleProgress = Math.min(frame / assembleFrames, 1);
-      const ease = 1 - Math.pow(1 - assembleProgress, 3);
-      const isDissolving = frame > assembleFrames + holdFrames;
-      const dissolveProgress = isDissolving ? Math.min((frame - assembleFrames - holdFrames) / dissolveFrames, 1) : 0;
-      const dissolveEase = dissolveProgress * dissolveProgress; // ease-in
-
-      // Draw particles (fade out during dissolve)
-      const particleAlpha = 1 - dissolveEase;
-      if (particleAlpha > 0.01) {
-        particles.forEach(p => {
-          if (assembleProgress < 1) {
-            p.x += (p.tx - p.x) * (0.03 + ease * 0.08);
-            p.y += (p.ty - p.y) * (0.03 + ease * 0.08);
-            if (assembleProgress < 0.7) {
-              p.x += (Math.random() - 0.5) * (1 - ease) * 2;
-              p.y += (Math.random() - 0.5) * (1 - ease) * 2;
-            }
-          } else if (isDissolving) {
-            // Scatter outward during dissolve
-            p.x += (p.x - W / 2) * 0.008 + (Math.random() - 0.5) * 0.5;
-            p.y += (p.y - H / 2) * 0.008 + (Math.random() - 0.5) * 0.5;
-          } else {
-            p.x = p.tx; p.y = p.ty;
-          }
-
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = (0.4 + ease * 0.6) * particleAlpha;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * (0.5 + ease * 0.5), 0, Math.PI * 2);
-          ctx.fill();
-        });
-        ctx.globalAlpha = 1;
-      }
-
-      // Draw clean logo (fade in during dissolve)
-      if (dissolveProgress > 0) {
-        glowPhase += 0.03;
-        const glowAmt = 12 + Math.sin(glowPhase) * 6;
-        drawCleanLogo(dissolveEase, glowAmt);
-      }
-
-      // After fully dissolved, just pulse the clean logo
-      if (dissolveProgress >= 1) {
-        glowPhase += 0.02;
-        const glowAmt = 10 + Math.sin(glowPhase) * 8;
-        // Already drawn above, just keep animating glow
-      }
-
-      animId = requestAnimationFrame(animate);
-    };
-
-    // Small delay for font loading
-    setTimeout(() => { animate(); }, 200);
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.8s ease-out" }}>
-      <div style={{ textAlign: "center", maxWidth: 580 }}>
-        {/* Particle Assembly π² Logo */}
-        <div style={{ marginBottom: 20, display: "flex", justifyContent: "center" }}>
-          <canvas ref={canvasRef} style={{ display: "block" }} />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.3s ease-out" }}>
+      <div style={{ textAlign: "center", maxWidth: 520 }}>
+        {/* Official Pi² logo — light variant, no background */}
+        <div style={{ marginBottom: 24, display: "flex", justifyContent: "center" }}>
+          <div
+            style={{
+              height: 88, width: 88,
+              background: BRAND.light,
+              WebkitMaskImage: "url('/PI2 logo light.jpeg')",
+              WebkitMaskSize: "contain",
+              WebkitMaskRepeat: "no-repeat",
+              WebkitMaskPosition: "center",
+              WebkitMaskMode: "luminance",
+              maskImage: "url('/PI2 logo light.jpeg')",
+              maskSize: "contain",
+              maskRepeat: "no-repeat",
+              maskPosition: "center",
+              maskMode: "luminance",
+            }}
+            role="img" aria-label="Pi² Labs"
+          />
         </div>
-        <p style={{ fontSize: 12, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,0.3)", fontWeight: 500, marginBottom: 20 }}>An Infinitely Scalable Network</p>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 100, fontSize: 12, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: "#ff6ec7", background: "rgba(255,110,199,0.06)", border: "1px solid rgba(255,110,199,0.15)", marginBottom: 16 }}>✦ Community Quiz ✦</div>
-        <p style={{ fontSize: 16, color: "#94A3B8", lineHeight: 1.7, maxWidth: 440, margin: "0 auto 36px" }}>Test your knowledge of Pi Squared's technology, team, and ecosystem across three levels of difficulty.</p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 28, maxWidth: 480, margin: "0 auto 28px" }}>
+
+        <p style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(250,249,240,0.3)", fontWeight: 500, marginBottom: 32 }}>An Infinitely Scalable Network</p>
+
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 6, fontSize: 11, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: BRAND.lavender, background: "rgba(216,210,250,0.06)", border: "1px solid rgba(216,210,250,0.12)", marginBottom: 24 }}>Community Quiz</div>
+
+        <p style={{ fontSize: 16, color: "rgba(250,249,240,0.5)", lineHeight: 1.7, maxWidth: 440, margin: "0 auto 32px", fontFamily: BRAND.sans }}>Test your knowledge of Pi²'s technology, team, and ecosystem across three levels of difficulty.</p>
+
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32, maxWidth: 480, margin: "0 auto 32px" }}>
           {[["30", "Questions"], ["3", "Levels"], ["20s", "Per Question"], ["🏆", "Certificate"]].map(([v, l], i) => (
-            <div key={i} style={{ padding: "10px 18px", borderRadius: 12, background: "rgba(100,50,200,0.1)", border: "1px solid rgba(120,80,220,0.2)", fontSize: 13, color: "#94A3B8" }}><span style={{ color: "#F1F5F9", fontWeight: 700, marginRight: 5 }}>{v}</span>{l}</div>
+            <div key={i} style={{ padding: "8px 16px", borderRadius: 8, background: "rgba(250,249,240,0.04)", border: "1px solid rgba(250,249,240,0.08)", fontSize: 13, color: "rgba(250,249,240,0.4)", fontFamily: BRAND.sans }}><span style={{ color: BRAND.light, fontWeight: 600, marginRight: 6, fontFamily: BRAND.mono }}>{v}</span>{l}</div>
           ))}
         </div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 12, background: "rgba(255,200,50,0.06)", border: "1px solid rgba(255,200,50,0.2)", marginBottom: 28 }}>
-          <span style={{ fontSize: 18 }}>🎁</span>
-          <span style={{ fontSize: 13, color: "#fbbf24", fontWeight: 600 }}>Score 81%+ on your first attempt to enter our $5 raffle!</span>
+
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 8, background: "rgba(213,250,211,0.04)", border: "1px solid rgba(213,250,211,0.1)", marginBottom: 32 }}>
+          <span style={{ fontSize: 14 }}>🎁</span>
+          <span style={{ fontSize: 13, color: BRAND.teal, fontWeight: 500, fontFamily: BRAND.sans }}>Score 81%+ on your first attempt to enter our $5 raffle</span>
         </div>
-        <button onClick={() => dispatch({ type: "START_QUIZ" })} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "18px 48px", borderRadius: 16, border: "none", background: "linear-gradient(135deg,#7c3aed,#ff2d95)", color: "white", fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 30px rgba(124,58,237,0.4), 0 0 60px rgba(255,45,149,0.15)", transition: "all 0.25s ease", letterSpacing: 0.3 }} onMouseEnter={e => { e.target.style.transform = "translateY(-3px)"; e.target.style.boxShadow = "0 8px 40px rgba(124,58,237,0.5), 0 0 80px rgba(255,45,149,0.25)" }} onMouseLeave={e => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 30px rgba(124,58,237,0.4), 0 0 60px rgba(255,45,149,0.15)" }}>Start Quiz →</button>
+
+        <div>
+          <button onClick={() => dispatch({ type: "START_QUIZ" })} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 32px", borderRadius: 8, border: "none", background: BRAND.lavender, color: BRAND.dark, fontFamily: BRAND.sans, fontSize: 15, fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease", letterSpacing: 0.2 }} onMouseEnter={e => { e.target.style.opacity = "0.85"; e.target.style.transform = "translateY(-2px)" }} onMouseLeave={e => { e.target.style.opacity = "1"; e.target.style.transform = "translateY(0)" }}>Start Quiz →</button>
+        </div>
       </div>
     </div>
   );
@@ -458,85 +428,21 @@ const WelcomeScreen = ({ dispatch }) => {
 const UsernameScreen = ({ state, dispatch }) => {
   const isTwitter = state.usernameType === "twitter";
   const canProceed = state.username.trim().length >= 2;
-  const sparkles = useMemo(() => Array.from({ length: 16 }, (_, i) => ({
-    id: i, left: `${10 + Math.random() * 80}%`, delay: `${Math.random() * 4}s`,
-    duration: `${2.5 + Math.random() * 2}s`, size: `${3 + Math.random() * 4}px`,
-    color: ["#A855F7", "#ff6ec7", "#22D3EE", "#fff"][i % 4],
-  })), []);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.8s ease-out" }}>
-
-      {/* Floating sparkles */}
-      {sparkles.map(s => (
-        <div key={s.id} style={{
-          position: "absolute", left: s.left, bottom: "15%",
-          width: s.size, height: s.size, borderRadius: "50%",
-          background: s.color,
-          boxShadow: `0 0 6px ${s.color}`,
-          animation: `sparkleFloat ${s.duration} ease-out infinite`,
-          animationDelay: s.delay,
-          pointerEvents: "none", zIndex: 5,
-        }} />
-      ))}
-
-      {/* Card with animated rotating gradient border */}
-      <div style={{ position: "relative", maxWidth: 460, width: "100%" }}>
-        {/* Rotating gradient border */}
-        <div style={{
-          position: "absolute", inset: -2, borderRadius: 22, overflow: "hidden",
-          zIndex: 0,
-        }}>
-          <div style={{
-            position: "absolute", inset: "-50%",
-            background: "conic-gradient(from 0deg, #7c3aed, #ff2d95, #22D3EE, #7c3aed)",
-            animation: "borderRotate 4s linear infinite",
-            opacity: 0.6,
-          }} />
-        </div>
-
-        {/* Expanding ring pulses behind card */}
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{
-            position: "absolute", top: "25%", left: "50%",
-            width: 200, height: 200, borderRadius: "50%",
-            border: "1px solid rgba(168,85,247,0.2)",
-            animation: `ringExpand 3s ease-out infinite`,
-            animationDelay: `${i * 1}s`,
-            pointerEvents: "none", zIndex: 0,
-          }} />
-        ))}
-
-        <div style={{
-          position: "relative", zIndex: 1,
-          background: "rgba(8,4,20,0.85)",
-          border: "1px solid rgba(120,80,220,0.15)",
-          borderRadius: 20,
-          backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
-          padding: "48px 36px", textAlign: "center",
-        }}>
-          {/* Glowing avatar orb */}
-          <div style={{
-            width: 72, height: 72, borderRadius: "50%",
-            margin: "0 auto 20px",
-            background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.4), rgba(124,58,237,0.2) 60%, rgba(255,45,149,0.1))",
-            border: "2px solid rgba(168,85,247,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            animation: "avatarFloat 3s ease-in-out infinite",
-            boxShadow: "0 0 30px rgba(124,58,237,0.25), 0 0 60px rgba(255,45,149,0.1)",
-          }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.3s ease-out" }}>
+      <div style={{ maxWidth: 440, width: "100%" }}>
+        <Card style={{ padding: "48px 32px", textAlign: "center" }}>
+          {/* Simple user icon */}
+          <div style={{ width: 56, height: 56, borderRadius: "50%", margin: "0 auto 24px", background: "rgba(216,210,250,0.08)", border: "1px solid rgba(216,210,250,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BRAND.lavender} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
 
-          <h2 style={{ fontFamily: "'Outfit'", fontSize: 28, fontWeight: 800, color: "#F1F5F9", marginBottom: 6, letterSpacing: -0.5 }}>
-            Before we begin...
-          </h2>
-          <p style={{ fontSize: 14, color: "#94A3B8", lineHeight: 1.6, marginBottom: 28 }}>
-            Enter your username so we can personalize your certificate at the end.
-          </p>
+          <h2 style={{ fontFamily: BRAND.sans, fontSize: 24, fontWeight: 700, color: BRAND.light, marginBottom: 8 }}>Before we begin</h2>
+          <p style={{ fontSize: 14, color: "rgba(250,249,240,0.4)", lineHeight: 1.6, marginBottom: 32, fontFamily: BRAND.sans }}>Enter your username so we can personalize your certificate.</p>
 
           {/* Platform toggle */}
           <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
@@ -545,175 +451,64 @@ const UsernameScreen = ({ state, dispatch }) => {
               { key: "discord", label: "Discord", svg: true },
             ].map(p => (
               <button key={p.key} onClick={() => dispatch({ type: "SET_USERNAME_TYPE", value: p.key })}
-                style={{
-                  padding: "10px 24px", borderRadius: 12,
-                  background: state.usernameType === p.key
-                    ? "linear-gradient(135deg,rgba(124,58,237,0.25),rgba(255,45,149,0.15))"
-                    : "rgba(100,50,200,0.05)",
-                  border: `1px solid ${state.usernameType === p.key ? "rgba(168,85,247,0.5)" : "rgba(120,80,220,0.15)"}`,
-                  color: state.usernameType === p.key ? "#F1F5F9" : "#64748B",
-                  fontFamily: "'Outfit'", fontSize: 14, fontWeight: 600, cursor: "pointer",
-                  transition: "all 0.25s ease",
-                  boxShadow: state.usernameType === p.key ? "0 0 20px rgba(124,58,237,0.15)" : "none",
-                }}
+                style={{ padding: "8px 20px", borderRadius: 8, background: state.usernameType === p.key ? "rgba(216,210,250,0.1)" : "transparent", border: `1px solid ${state.usernameType === p.key ? "rgba(216,210,250,0.3)" : "rgba(250,249,240,0.08)"}`, color: state.usernameType === p.key ? BRAND.light : "rgba(250,249,240,0.3)", fontFamily: BRAND.sans, fontSize: 14, fontWeight: 500, cursor: "pointer", transition: "all 0.15s ease" }}
               >{p.svg ? <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><svg width="18" height="14" viewBox="0 0 71 55" fill="currentColor"><path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A26.5 26.5 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9 .2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1A58.7 58.7 0 0070.5 45.7v-.2c1.4-15-2.3-28.1-9.8-39.7a.2.2 0 00-.1 0zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.2 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.2 6.3 7-2.8 7-6.3 7z" /></svg>{p.label}</span> : p.label}</button>
             ))}
           </div>
 
-          {/* Input with glow */}
-          <div style={{ position: "relative", marginBottom: 28 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "14px 20px", borderRadius: 14,
-              background: "rgba(100,50,200,0.08)",
-              border: "1px solid rgba(120,80,220,0.3)",
-              animation: canProceed ? "inputGlow 2s ease-in-out infinite" : "none",
-              transition: "all 0.3s ease",
-            }}>
-              {isTwitter && <span style={{ fontSize: 18, fontWeight: 700, color: "#A855F7", fontFamily: "'JetBrains Mono'" }}>@</span>}
-              <input
-                type="text"
-                value={state.username}
-                onChange={e => {
-                  const val = isTwitter
-                    ? e.target.value.replace(/[^a-zA-Z0-9_]/g, "")
-                    : e.target.value.replace(/[^a-zA-Z0-9_.\-#]/g, "");
-                  dispatch({ type: "SET_USERNAME", value: val });
-                }}
-                placeholder={isTwitter ? "your_twitter_handle" : "username#0000"}
-                maxLength={isTwitter ? 15 : 37}
-                autoFocus
-                style={{
-                  flex: 1, background: "transparent", border: "none",
-                  color: "#F1F5F9", fontSize: 18, fontWeight: 600,
-                  fontFamily: "'JetBrains Mono',monospace", outline: "none",
-                }}
-                onKeyDown={e => { if (e.key === "Enter" && canProceed) dispatch({ type: "BEGIN_QUIZ" }) }}
-              />
+          {/* Clean input */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderRadius: 6, background: "rgba(250,249,240,0.03)", border: "1px solid rgba(250,249,240,0.12)", transition: "border-color 0.15s ease" }}>
+              {isTwitter && <span style={{ fontSize: 16, fontWeight: 600, color: BRAND.lavender, fontFamily: BRAND.mono }}>@</span>}
+              <input type="text" value={state.username} onChange={e => { const val = isTwitter ? e.target.value.replace(/[^a-zA-Z0-9_]/g, "") : e.target.value.replace(/[^a-zA-Z0-9_.\-#]/g, ""); dispatch({ type: "SET_USERNAME", value: val }); }} placeholder={isTwitter ? "your_twitter_handle" : "username#0000"} maxLength={isTwitter ? 15 : 37} autoFocus style={{ flex: 1, background: "transparent", border: "none", color: BRAND.light, fontSize: 16, fontWeight: 500, fontFamily: BRAND.mono, outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && canProceed) dispatch({ type: "BEGIN_QUIZ" }) }} onFocus={e => { e.currentTarget.parentElement.style.borderColor = "rgba(216,210,250,0.5)" }} onBlur={e => { e.currentTarget.parentElement.style.borderColor = "rgba(250,249,240,0.12)" }} />
             </div>
           </div>
 
-          <button
-            onClick={() => dispatch({ type: "BEGIN_QUIZ" })}
-            disabled={!canProceed}
-            style={{
-              width: "100%", padding: "16px", borderRadius: 14, border: "none",
-              background: canProceed ? "linear-gradient(135deg,#7c3aed,#ff2d95)" : "rgba(100,50,200,0.1)",
-              color: canProceed ? "white" : "#64748B",
-              fontFamily: "'Outfit'", fontSize: 17, fontWeight: 700,
-              cursor: canProceed ? "pointer" : "not-allowed",
-              opacity: canProceed ? 1 : 0.4,
-              boxShadow: canProceed ? "0 4px 30px rgba(124,58,237,0.35), 0 0 60px rgba(255,45,149,0.12)" : "none",
-              transition: "all 0.3s ease",
-              transform: canProceed ? "scale(1)" : "scale(0.98)",
-            }}
-          >
-            Let's Go →
-          </button>
-        </div>
+          <button onClick={() => dispatch({ type: "BEGIN_QUIZ" })} disabled={!canProceed} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: canProceed ? BRAND.lavender : "rgba(250,249,240,0.04)", color: canProceed ? BRAND.dark : "rgba(250,249,240,0.2)", fontFamily: BRAND.sans, fontSize: 15, fontWeight: 600, cursor: canProceed ? "pointer" : "not-allowed", opacity: canProceed ? 1 : 0.6, transition: "all 0.15s ease" }}>Continue →</button>
+        </Card>
       </div>
     </div>
   );
 };
 
 const LoadingScreen = ({ dispatch }) => {
-  const [phase, setPhase] = useState(0); // 0=spinning, 1=ready, 2=fadeout
+  const [phase, setPhase] = useState(0);
   const [dots, setDots] = useState("");
-
   useEffect(() => {
-    // Dot animation
-    const dotInterval = setInterval(() => {
-      setDots(d => d.length >= 3 ? "" : d + ".");
-    }, 400);
-    // After 2.2s show "READY"
+    const dotInterval = setInterval(() => { setDots(d => d.length >= 3 ? "" : d + "."); }, 400);
     const readyTimer = setTimeout(() => setPhase(1), 2200);
-    // After 2.8s fade out
     const fadeTimer = setTimeout(() => setPhase(2), 2800);
-    // After 3.2s dispatch
     const goTimer = setTimeout(() => dispatch({ type: "LOADING_DONE" }), 3200);
     return () => { clearInterval(dotInterval); clearTimeout(readyTimer); clearTimeout(fadeTimer); clearTimeout(goTimer); };
   }, [dispatch]);
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4,
-      animation: phase === 2 ? "loadFadeOut 0.4s ease-out forwards" : "pi2FadeIn 0.4s ease",
-    }}>
-      {/* Spinning π² logo */}
-      <div style={{
-        position: "relative", width: 120, height: 120, marginBottom: 36,
-        animation: "piSpinGlow 2s ease-in-out infinite",
-      }}>
-        {/* Orbit ring */}
-        <div style={{
-          position: "absolute", inset: -12, borderRadius: "50%",
-          border: "2px solid transparent",
-          borderTopColor: "rgba(168,85,247,0.5)",
-          borderRightColor: "rgba(255,45,149,0.3)",
-          animation: "piSpin 1.5s linear infinite",
-        }} />
-        <div style={{
-          position: "absolute", inset: -4, borderRadius: "50%",
-          border: "1px solid transparent",
-          borderBottomColor: "rgba(34,211,238,0.4)",
-          borderLeftColor: "rgba(168,85,247,0.2)",
-          animation: "piSpin 2.5s linear infinite reverse",
-        }} />
-        {/* Inner glow */}
-        <div style={{
-          position: "absolute", inset: 0, borderRadius: "50%",
-          background: "radial-gradient(circle at 40% 40%, rgba(124,58,237,0.15), rgba(255,45,149,0.05) 70%, transparent)",
-        }} />
-        {/* π² text */}
-        <div style={{
-          position: "absolute", inset: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <span style={{
-            fontFamily: "'Outfit',sans-serif", fontSize: 48, fontWeight: 300,
-            color: "rgba(255,255,255,0.9)",
-            textShadow: "0 0 20px rgba(168,85,247,0.4)",
-          }}>
-            π<sup style={{ fontSize: "0.5em", position: "relative", top: "-0.4em" }}>2</sup>
-          </span>
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4, animation: phase === 2 ? "loadFadeOut 0.3s ease-out forwards" : "pi2FadeIn 0.3s ease" }}>
+      {/* Pi² logo */}
+      <div style={{ marginBottom: 32, display: "flex", justifyContent: "center" }}>
+        <div
+          style={{
+            height: 64, width: 64,
+            background: BRAND.light,
+            WebkitMaskImage: "url('/PI2 logo light.jpeg')",
+            WebkitMaskSize: "contain",
+            WebkitMaskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+            WebkitMaskMode: "luminance",
+            maskImage: "url('/PI2 logo light.jpeg')",
+            maskSize: "contain",
+            maskRepeat: "no-repeat",
+            maskPosition: "center",
+            maskMode: "luminance",
+          }}
+        />
       </div>
-
-      {/* Text */}
       <div style={{ textAlign: "center" }}>
-        {phase === 0 && (
-          <p style={{
-            fontFamily: "'Outfit'", fontSize: 18, fontWeight: 500,
-            color: "#94A3B8", letterSpacing: 0.5,
-          }}>
-            Preparing your challenge{dots}
-          </p>
-        )}
-        {phase >= 1 && (
-          <p style={{
-            fontFamily: "'Outfit'", fontSize: 28, fontWeight: 800,
-            background: "linear-gradient(135deg,#A855F7,#ff2d95,#22D3EE)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            animation: "pi2SlideUp 0.3s ease-out",
-            letterSpacing: 1,
-          }}>
-            READY!
-          </p>
-        )}
+        {phase === 0 && <p style={{ fontFamily: BRAND.sans, fontSize: 16, fontWeight: 400, color: "rgba(250,249,240,0.4)" }}>Preparing your challenge{dots}</p>}
+        {phase >= 1 && <p style={{ fontFamily: BRAND.sans, fontSize: 24, fontWeight: 700, color: BRAND.lavender, animation: "pi2SlideUp 0.2s ease-out", letterSpacing: "0.05em" }}>READY</p>}
       </div>
-
-      {/* Progress bar */}
-      <div style={{
-        width: 200, height: 3, borderRadius: 2, marginTop: 24,
-        background: "rgba(255,255,255,0.06)", overflow: "hidden",
-      }}>
-        <div style={{
-          height: "100%", borderRadius: 2,
-          background: "linear-gradient(90deg,#7c3aed,#ff2d95,#22D3EE)",
-          animation: "loadBarFill 2.8s ease-out forwards",
-        }} />
+      <div style={{ width: 160, height: 2, borderRadius: 1, marginTop: 24, background: "rgba(250,249,240,0.06)", overflow: "hidden" }}>
+        <div style={{ height: "100%", borderRadius: 1, background: BRAND.lavender, animation: "loadBarFill 2.8s ease-out forwards" }} />
       </div>
     </div>
   );
@@ -722,48 +517,48 @@ const LoadingScreen = ({ dispatch }) => {
 const QuizScreen = ({ state, dispatch }) => {
   const q = QUESTIONS[state.currentQ];
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4 }}>
-      <div style={{ width: "100%", maxWidth: 640 }} key={state.currentQ}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, animation: "pi2FadeIn 0.3s ease" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4 }}>
+      <div style={{ width: "100%", maxWidth: 600 }} key={state.currentQ}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, animation: "pi2FadeIn 0.2s ease" }}>
           <DiffBadge difficulty={q.difficulty} />
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 600, color: "#64748B" }}>{state.currentQ + 1} / {QUESTIONS.length}</div>
+          <div style={{ fontFamily: BRAND.mono, fontSize: 13, fontWeight: 500, color: "rgba(250,249,240,0.3)" }}>{state.currentQ + 1} / {QUESTIONS.length}</div>
           <TimerRing timeLeft={state.timeLeft} />
         </div>
-        <div style={{ marginBottom: 28 }}><ProgressBar current={state.currentQ + (state.showFeedback ? 1 : 0)} total={QUESTIONS.length} /></div>
-        <Glass style={{ padding: "36px 32px", marginBottom: 20, animation: "pi2SlideIn 0.45s ease-out" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 500, color: "#64748B", letterSpacing: 1, textTransform: "uppercase" }}>{q.difficulty} · Question {state.currentQ + 1}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 600, color: "#A855F7" }}>Score: {state.score}/{state.currentQ + (state.showFeedback ? 1 : 0)}</span>
+        <div style={{ marginBottom: 24 }}><ProgressBar current={state.currentQ + (state.showFeedback ? 1 : 0)} total={QUESTIONS.length} /></div>
+        <Card style={{ padding: "32px 28px", marginBottom: 16, animation: "pi2SlideUp 0.25s ease-out" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(250,249,240,0.3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{q.difficulty} · Question {state.currentQ + 1}</span>
+            <span style={{ fontFamily: BRAND.mono, fontSize: 13, fontWeight: 500, color: BRAND.lavender }}>Score: {state.score}/{state.currentQ + (state.showFeedback ? 1 : 0)}</span>
           </div>
-          <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: "clamp(18px,3.5vw,22px)", fontWeight: 700, lineHeight: 1.4, color: "#F1F5F9" }}>{q.text}</h2>
-        </Glass>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "pi2SlideUp 0.5s ease-out" }}>
+          <h2 style={{ fontFamily: BRAND.sans, fontSize: "clamp(17px,3.5vw,20px)", fontWeight: 600, lineHeight: 1.5, color: BRAND.light }}>{q.text}</h2>
+        </Card>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "pi2SlideUp 0.3s ease-out" }}>
           {q.options.map((opt, i) => {
             const isSelected = state.selected === i; const isCorrect = i === q.correct;
             const showCorrect = state.showFeedback && isCorrect; const showWrong = state.showFeedback && isSelected && !isCorrect;
-            let bg = "rgba(10,5,25,0.5)", border = "rgba(120,80,220,0.15)", tc = "#E2E8F0", anim = "";
-            if (showCorrect) { bg = "rgba(52,211,153,0.12)"; border = "rgba(52,211,153,0.4)"; tc = "#34D399"; anim = "pi2-correct-pulse"; }
-            else if (showWrong) { bg = "rgba(248,113,113,0.12)"; border = "rgba(248,113,113,0.4)"; tc = "#F87171"; anim = "pi2-shake"; }
-            else if (state.showFeedback) { bg = "rgba(10,5,25,0.3)"; tc = "#64748B"; }
+            let bg = "rgba(250,249,240,0.03)", border = "rgba(250,249,240,0.08)", tc = BRAND.light, anim = "";
+            if (showCorrect) { bg = "rgba(213,250,211,0.08)"; border = "rgba(213,250,211,0.3)"; tc = BRAND.teal; }
+            else if (showWrong) { bg = "rgba(229,115,115,0.08)"; border = "rgba(229,115,115,0.3)"; tc = BRAND.error; anim = "pi2-shake"; }
+            else if (state.showFeedback) { bg = "rgba(250,249,240,0.02)"; tc = "rgba(250,249,240,0.3)"; }
             return (
               <button key={i} className={anim} onClick={() => !state.showFeedback && dispatch({ type: "SELECT_ANSWER", index: i })} disabled={state.showFeedback}
-                style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", padding: "16px 20px", borderRadius: 14, border: `1px solid ${border}`, background: bg, color: tc, fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 500, textAlign: "left", cursor: state.showFeedback ? "default" : "pointer", transition: "all 0.2s ease", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
-                onMouseEnter={e => { if (!state.showFeedback) { e.currentTarget.style.background = "rgba(120,80,220,0.15)"; e.currentTarget.style.borderColor = "rgba(168,85,247,0.5)"; e.currentTarget.style.transform = "translateY(-2px)" } }}
+                style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 16px", borderRadius: 8, border: `1px solid ${border}`, background: bg, color: tc, fontFamily: BRAND.sans, fontSize: 15, fontWeight: 400, textAlign: "left", cursor: state.showFeedback ? "default" : "pointer", transition: "all 0.15s ease" }}
+                onMouseEnter={e => { if (!state.showFeedback) { e.currentTarget.style.background = "rgba(250,249,240,0.06)"; e.currentTarget.style.borderColor = "rgba(250,249,240,0.15)"; e.currentTarget.style.transform = "translateY(-1px)" } }}
                 onMouseLeave={e => { if (!state.showFeedback) { e.currentTarget.style.background = bg; e.currentTarget.style.borderColor = border; e.currentTarget.style.transform = "translateY(0)" } }}
               >
-                <span style={{ width: 30, height: 30, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0, background: showCorrect ? "rgba(52,211,153,0.2)" : showWrong ? "rgba(248,113,113,0.2)" : "rgba(120,80,220,0.15)", color: showCorrect ? "#34D399" : showWrong ? "#F87171" : "#94A3B8", fontFamily: "'JetBrains Mono',monospace" }}>{showCorrect ? "✓" : showWrong ? "✕" : String.fromCharCode(65 + i)}</span>
+                <span style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, flexShrink: 0, background: showCorrect ? "rgba(213,250,211,0.15)" : showWrong ? "rgba(229,115,115,0.15)" : "rgba(250,249,240,0.06)", color: showCorrect ? BRAND.teal : showWrong ? BRAND.error : "rgba(250,249,240,0.4)", fontFamily: BRAND.mono }}>{showCorrect ? "✓" : showWrong ? "✕" : String.fromCharCode(65 + i)}</span>
                 {opt}
               </button>
             );
           })}
         </div>
         {state.showFeedback && (
-          <div style={{ animation: "pi2SlideUp 0.4s ease-out" }}>
-            <Glass style={{ marginTop: 16, padding: "18px 22px", borderColor: state.selected === q.correct ? "rgba(52,211,153,0.2)" : state.selected === -1 ? "rgba(251,191,36,0.2)" : "rgba(248,113,113,0.2)" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: state.selected === q.correct ? "#34D399" : state.selected === -1 ? "#FBBF24" : "#F87171" }}>{state.selected === q.correct ? "✓ Correct!" : state.selected === -1 ? "⏱ Time's up!" : "✕ Incorrect"}</div>
-              <div style={{ fontSize: 14, color: "#94A3B8", lineHeight: 1.6 }}>{q.explanation}</div>
-            </Glass>
-            <button onClick={() => dispatch({ type: "NEXT_QUESTION" })} style={{ marginTop: 16, width: "100%", padding: "15px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#7c3aed,#ff2d95)", color: "white", fontFamily: "'Outfit',sans-serif", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+          <div style={{ animation: "pi2SlideUp 0.2s ease-out" }}>
+            <Card style={{ marginTop: 12, padding: "16px 20px", borderColor: state.selected === q.correct ? "rgba(213,250,211,0.15)" : state.selected === -1 ? "rgba(216,210,250,0.15)" : "rgba(229,115,115,0.15)" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: state.selected === q.correct ? BRAND.teal : state.selected === -1 ? BRAND.lavender : BRAND.error }}>{state.selected === q.correct ? "✓ Correct" : state.selected === -1 ? "⏱ Time's up" : "✕ Incorrect"}</div>
+              <div style={{ fontSize: 14, color: "rgba(250,249,240,0.5)", lineHeight: 1.6, fontFamily: BRAND.sans }}>{q.explanation}</div>
+            </Card>
+            <button onClick={() => dispatch({ type: "NEXT_QUESTION" })} style={{ marginTop: 12, width: "100%", padding: "14px", borderRadius: 8, border: "none", background: BRAND.lavender, color: BRAND.dark, fontFamily: BRAND.sans, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
               {state.currentQ + 1 >= QUESTIONS.length ? "See Results →" : "Next Question →"}
             </button>
           </div>
@@ -776,21 +571,20 @@ const QuizScreen = ({ state, dispatch }) => {
 const TransitionScreen = ({ state, dispatch }) => {
   const nextDiff = QUESTIONS[state.currentQ].difficulty; const dm = DIFF_META[nextDiff];
   const prevScore = state.answers.filter(a => a.isCorrect).length; const prevTotal = state.answers.length;
-  const msgs = { intermediate: { title: "Level Up!", sub: "You've cleared the Beginner round. Time to test your deeper knowledge." }, advanced: { title: "Final Level!", sub: "You've made it to Advanced. These questions separate the experts from the explorers." } };
+  const msgs = { intermediate: { title: "Level Up", sub: "You've cleared the Beginner round. Time to test your deeper knowledge." }, advanced: { title: "Final Level", sub: "You've made it to Advanced. These questions separate the experts from the explorers." } };
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.8s ease-out" }}>
-      <Glass style={{ maxWidth: 480, width: "100%", padding: "48px 36px", textAlign: "center" }}>
-        <div style={{ fontSize: 56, marginBottom: 16 }}>{dm.icon}</div>
-        <h2 style={{ fontFamily: "'Outfit'", fontSize: 32, fontWeight: 800, color: "#F1F5F9", marginBottom: 8 }}>{msgs[nextDiff]?.title}</h2>
-        <p style={{ fontSize: 15, color: "#94A3B8", lineHeight: 1.6, marginBottom: 24 }}>{msgs[nextDiff]?.sub}</p>
-        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 32, padding: "16px", borderRadius: 14, background: "rgba(100,50,200,0.08)" }}>
-          <div style={{ textAlign: "center" }}><div style={{ fontFamily: "'JetBrains Mono'", fontSize: 24, fontWeight: 700, color: "#A855F7" }}>{prevScore}</div><div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>Correct</div></div>
-          <div style={{ width: 1, background: "rgba(120,80,220,0.2)" }} />
-          <div style={{ textAlign: "center" }}><div style={{ fontFamily: "'JetBrains Mono'", fontSize: 24, fontWeight: 700, color: "#22D3EE" }}>{prevTotal}</div><div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>Answered</div></div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.3s ease-out" }}>
+      <Card style={{ maxWidth: 440, width: "100%", padding: "48px 32px", textAlign: "center" }}>
+        <h2 style={{ fontFamily: BRAND.sans, fontSize: 28, fontWeight: 700, color: BRAND.light, marginBottom: 8 }}>{msgs[nextDiff]?.title}</h2>
+        <p style={{ fontSize: 15, color: "rgba(250,249,240,0.4)", lineHeight: 1.6, marginBottom: 24, fontFamily: BRAND.sans }}>{msgs[nextDiff]?.sub}</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 24, marginBottom: 32, padding: "16px", borderRadius: 8, background: "rgba(250,249,240,0.03)" }}>
+          <div style={{ textAlign: "center" }}><div style={{ fontFamily: BRAND.mono, fontSize: 24, fontWeight: 600, color: BRAND.lavender }}>{prevScore}</div><div style={{ fontSize: 12, color: "rgba(250,249,240,0.3)", marginTop: 4 }}>Correct</div></div>
+          <div style={{ width: 1, background: "rgba(250,249,240,0.08)" }} />
+          <div style={{ textAlign: "center" }}><div style={{ fontFamily: BRAND.mono, fontSize: 24, fontWeight: 600, color: BRAND.teal }}>{prevTotal}</div><div style={{ fontSize: 12, color: "rgba(250,249,240,0.3)", marginTop: 4 }}>Answered</div></div>
         </div>
         <DiffBadge difficulty={nextDiff} />
-        <button onClick={() => dispatch({ type: "RESUME_FROM_TRANSITION" })} style={{ display: "block", width: "100%", marginTop: 28, padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#7c3aed,#ff2d95)", color: "white", fontFamily: "'Outfit'", fontSize: 17, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 24px rgba(124,58,237,0.3)" }}>Continue →</button>
-      </Glass>
+        <button onClick={() => dispatch({ type: "RESUME_FROM_TRANSITION" })} style={{ display: "block", width: "100%", marginTop: 24, padding: "14px", borderRadius: 8, border: "none", background: BRAND.lavender, color: BRAND.dark, fontFamily: BRAND.sans, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>Continue →</button>
+      </Card>
     </div>
   );
 };
@@ -799,59 +593,55 @@ const ResultScreen = ({ state, dispatch }) => {
   const pct = Math.round((state.score / QUESTIONS.length) * 100);
   const tier = [...TIERS].reverse().find(t => pct >= t.min);
   const [animPct, setAnimPct] = useState(0);
-  const [showConfetti, setShowConfetti] = useState(false);
   const isRaffleEligible = pct >= 81 && state.attempt === 1;
   const [showRaffleModal, setShowRaffleModal] = useState(false);
-  useEffect(() => { const dur = 1500, start = Date.now(); const anim = () => { const e = Date.now() - start, p = Math.min(e / dur, 1), ea = 1 - Math.pow(1 - p, 3); setAnimPct(Math.round(ea * pct)); if (p < 1) requestAnimationFrame(anim); else { if (pct >= 60) setShowConfetti(true); if (isRaffleEligible) setTimeout(() => setShowRaffleModal(true), 800); } }; requestAnimationFrame(anim) }, [pct]);
+  useEffect(() => { const dur = 1500, start = Date.now(); const anim = () => { const e = Date.now() - start, p = Math.min(e / dur, 1), ea = 1 - Math.pow(1 - p, 3); setAnimPct(Math.round(ea * pct)); if (p < 1) requestAnimationFrame(anim); else { if (isRaffleEligible) setTimeout(() => setShowRaffleModal(true), 800); } }; requestAnimationFrame(anim) }, [pct]);
   const byDiff = d => { const qs = state.answers.filter((_, i) => QUESTIONS[i].difficulty === d); return { correct: qs.filter(a => a.isCorrect).length, total: qs.length } };
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.8s ease-out" }}>
-      {showConfetti && <Confetti />}
-      <Glass style={{ maxWidth: 520, width: "100%", padding: "44px 36px", textAlign: "center" }}>
-        <div style={{ fontSize: 60, marginBottom: 8, animation: "pi2ScoreCount 0.6s ease-out" }}>{tier.emoji}</div>
-        <h2 style={{ fontFamily: "'Outfit'", fontSize: 28, fontWeight: 800, color: "#F1F5F9", marginBottom: 4 }}>{tier.title}</h2>
-        {state.attempt > 1 && <div style={{ display: "inline-flex", padding: "4px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, color: "#94A3B8", background: "rgba(100,50,200,0.1)", border: "1px solid rgba(120,80,220,0.15)", marginBottom: 8 }}>Attempt #{state.attempt}</div>}
-        <p style={{ fontSize: 14, color: "#94A3B8", lineHeight: 1.6, maxWidth: 380, margin: "0 auto 28px" }}>{tier.message}</p>
-        <div style={{ position: "relative", width: 140, height: 140, margin: "0 auto 28px" }}>
-          <svg width={140} height={140} style={{ transform: "rotate(-90deg)" }}>
-            <circle cx={70} cy={70} r={60} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
-            <circle cx={70} cy={70} r={60} fill="none" stroke="url(#scoreGrad)" strokeWidth={8} strokeDasharray={2 * Math.PI * 60} strokeDashoffset={2 * Math.PI * 60 * (1 - animPct / 100)} strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.1s linear" }} />
-            <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#ff2d95" /></linearGradient></defs>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.3s ease-out" }}>
+      <Card style={{ maxWidth: 480, width: "100%", padding: "40px 32px", textAlign: "center" }}>
+        <div style={{ fontSize: 48, marginBottom: 8, animation: "pi2ScoreCount 0.4s ease-out" }}>{tier.emoji}</div>
+        <h2 style={{ fontFamily: BRAND.sans, fontSize: 24, fontWeight: 700, color: BRAND.light, marginBottom: 4 }}>{tier.title}</h2>
+        {state.attempt > 1 && <div style={{ display: "inline-flex", padding: "4px 12px", borderRadius: 6, fontSize: 11, fontWeight: 500, color: "rgba(250,249,240,0.4)", background: "rgba(250,249,240,0.04)", border: "1px solid rgba(250,249,240,0.08)", marginBottom: 8 }}>Attempt #{state.attempt}</div>}
+        <p style={{ fontSize: 14, color: "rgba(250,249,240,0.4)", lineHeight: 1.6, maxWidth: 360, margin: "0 auto 24px", fontFamily: BRAND.sans }}>{tier.message}</p>
+        <div style={{ position: "relative", width: 120, height: 120, margin: "0 auto 24px" }}>
+          <svg width={120} height={120} style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={60} cy={60} r={52} fill="none" stroke="rgba(250,249,240,0.04)" strokeWidth={6} />
+            <circle cx={60} cy={60} r={52} fill="none" stroke={BRAND.lavender} strokeWidth={6} strokeDasharray={2 * Math.PI * 52} strokeDashoffset={2 * Math.PI * 52 * (1 - animPct / 100)} strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.1s linear" }} />
           </svg>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 36, fontWeight: 700, color: "#F1F5F9" }}>{animPct}%</span>
-            <span style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>{state.score}/{QUESTIONS.length}</span>
+            <span style={{ fontFamily: BRAND.mono, fontSize: 32, fontWeight: 600, color: BRAND.light, fontVariantNumeric: "tabular-nums" }}>{animPct}%</span>
+            <span style={{ fontSize: 11, color: "rgba(250,249,240,0.3)", fontWeight: 500, fontFamily: BRAND.mono }}>{state.score}/{QUESTIONS.length}</span>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 28 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24 }}>
           {["beginner", "intermediate", "advanced"].map(d => {
             const { correct, total } = byDiff(d); const dm = DIFF_META[d]; return (
-              <div key={d} style={{ padding: "14px 10px", borderRadius: 12, background: dm.bg, border: `1px solid ${dm.border}`, textAlign: "center" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: dm.color, marginBottom: 4 }}>{dm.icon} {dm.label}</div>
-                <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 18, fontWeight: 700, color: "#F1F5F9" }}>{correct}/{total}</div>
+              <div key={d} style={{ padding: "12px 8px", borderRadius: 8, background: dm.bg, border: `1px solid ${dm.border}`, textAlign: "center" }}>
+                <div style={{ fontSize: 11, fontWeight: 500, color: dm.color, marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>{dm.label}</div>
+                <div style={{ fontFamily: BRAND.mono, fontSize: 18, fontWeight: 600, color: BRAND.light }}>{correct}/{total}</div>
               </div>
             )
           })}
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button onClick={() => dispatch({ type: "SHOW_CERTIFICATE" })} style={{ flex: 1, padding: "15px 20px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#7c3aed,#ff2d95)", color: "white", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 700, cursor: "pointer", minWidth: 160 }}>🏆 Get Certificate</button>
-          <button onClick={() => dispatch({ type: "RESTART" })} style={{ flex: 1, padding: "15px 20px", borderRadius: 14, background: "rgba(100,50,200,0.1)", border: "1px solid rgba(120,80,220,0.2)", color: "#E2E8F0", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 600, cursor: "pointer", minWidth: 120 }}>↻ Retry</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={() => dispatch({ type: "SHOW_CERTIFICATE" })} style={{ flex: 1, padding: "14px 16px", borderRadius: 8, border: "none", background: BRAND.lavender, color: BRAND.dark, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 600, cursor: "pointer", minWidth: 140 }}>Get Certificate</button>
+          <button onClick={() => dispatch({ type: "RESTART" })} style={{ flex: 1, padding: "14px 16px", borderRadius: 8, background: "transparent", border: "1px solid rgba(250,249,240,0.12)", color: BRAND.light, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 500, cursor: "pointer", minWidth: 100 }}>↻ Retry</button>
         </div>
-        {isRaffleEligible && <div style={{ marginTop: 14 }}>
-          <button onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdKqgvw5NZ6CGts_tOjqwaWrXaAXMU7rhu5iqEF1cID_ycubg/viewform?usp=publish-editor", "_blank")} style={{ width: "100%", padding: "14px 20px", borderRadius: 14, border: "1px solid rgba(255,200,50,0.3)", background: "rgba(255,200,50,0.08)", color: "#fbbf24", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>🎁 Enter $5 Raffle</button>
+        {isRaffleEligible && <div style={{ marginTop: 12 }}>
+          <button onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdKqgvw5NZ6CGts_tOjqwaWrXaAXMU7rhu5iqEF1cID_ycubg/viewform?usp=publish-editor", "_blank")} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid rgba(213,250,211,0.15)", background: "rgba(213,250,211,0.04)", color: BRAND.teal, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>🎁 Enter $5 Raffle</button>
         </div>}
-      </Glass>
-      {showRaffleModal && <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", animation: "pi2FadeIn 0.3s ease-out" }}>
-        <div onClick={() => setShowRaffleModal(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }} />
-        <div style={{ position: "relative", maxWidth: 420, width: "90%", padding: "40px 32px", borderRadius: 24, background: "linear-gradient(145deg,#0c0d18 0%,#1a0a3e 100%)", border: "1px solid rgba(255,200,50,0.25)", boxShadow: "0 0 60px rgba(255,200,50,0.1), 0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
-          <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
-          <h3 style={{ fontFamily: "'Outfit'", fontSize: 24, fontWeight: 800, color: "#fbbf24", marginBottom: 8 }}>You've Unlocked the Raffle!</h3>
-          <p style={{ fontSize: 14, color: "#94A3B8", lineHeight: 1.6, marginBottom: 8 }}>
-            As an <span style={{ color: "#F1F5F9", fontWeight: 600 }}>Infinite Voyager</span> on your first attempt, you're eligible to enter our <span style={{ color: "#fbbf24", fontWeight: 700 }}>$5 raffle</span>!
+      </Card>
+      {showRaffleModal && <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", animation: "pi2FadeIn 0.2s ease-out" }}>
+        <div onClick={() => setShowRaffleModal(false)} style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.85)" }} />
+        <div style={{ position: "relative", maxWidth: 400, width: "90%", padding: "40px 32px", borderRadius: 12, background: BRAND.dark, border: "1px solid rgba(250,249,240,0.1)", textAlign: "center" }}>
+          <h3 style={{ fontFamily: BRAND.sans, fontSize: 20, fontWeight: 700, color: BRAND.light, marginBottom: 8 }}>Raffle Unlocked</h3>
+          <p style={{ fontSize: 14, color: "rgba(250,249,240,0.4)", lineHeight: 1.6, marginBottom: 8, fontFamily: BRAND.sans }}>
+            As an <span style={{ color: BRAND.light, fontWeight: 600 }}>Infinite Voyager</span> on your first attempt, you're eligible for the <span style={{ color: BRAND.teal, fontWeight: 600 }}>$5 raffle</span>.
           </p>
-          <p style={{ fontSize: 12, color: "#64748B", marginBottom: 24 }}>Fill out the form with your details to enter.</p>
-          <button onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdKqgvw5NZ6CGts_tOjqwaWrXaAXMU7rhu5iqEF1cID_ycubg/viewform?usp=publish-editor", "_blank")} style={{ width: "100%", padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#f59e0b,#fbbf24)", color: "#0a0a12", fontFamily: "'Outfit'", fontSize: 16, fontWeight: 800, cursor: "pointer", marginBottom: 12, boxShadow: "0 4px 20px rgba(251,191,36,0.3)" }}>🎁 Enter Raffle Now</button>
-          <button onClick={() => setShowRaffleModal(false)} style={{ width: "100%", padding: "12px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "#94A3B8", fontFamily: "'Outfit'", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Maybe Later</button>
+          <p style={{ fontSize: 12, color: "rgba(250,249,240,0.3)", marginBottom: 24, fontFamily: BRAND.sans }}>Fill out the form with your details to enter.</p>
+          <button onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdKqgvw5NZ6CGts_tOjqwaWrXaAXMU7rhu5iqEF1cID_ycubg/viewform?usp=publish-editor", "_blank")} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: BRAND.teal, color: BRAND.dark, fontFamily: BRAND.sans, fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 8 }}>Enter Raffle</button>
+          <button onClick={() => setShowRaffleModal(false)} style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1px solid rgba(250,249,240,0.08)", background: "transparent", color: "rgba(250,249,240,0.4)", fontFamily: BRAND.sans, fontSize: 14, fontWeight: 400, cursor: "pointer" }}>Maybe Later</button>
         </div>
       </div>}
     </div>
@@ -877,147 +667,153 @@ const CertificateScreen = ({ state, dispatch }) => {
     c.width = W * SCALE; c.height = H * SCALE;
     ctx.scale(SCALE, SCALE);
 
-    const ACCENT = "#A855F7";
-    const ACCENT_LIGHT = "#C084FC";
-    const CYAN = "#22D3EE";
-    const PINK = "#ff2d95";
-    const WHITE = "#FFFFFF";
+    // ── Brand palette only ──
+    const CREAM = "#FAF9F0";
+    const DARK = "#1A1A1A";
+    const LAVENDER = "#D8D2FA";
+    const TEAL = "#D5FAD3";
+
+    // ── Brand fonts ──
+    const SANS = "'Geist Sans', 'Inter', system-ui, sans-serif";
+    const MONO = "'Geist Mono', 'JetBrains Mono', monospace";
 
     const bg = new Image();
     bg.crossOrigin = "anonymous";
     bg.onload = () => {
       // Draw background scaled to fill
       ctx.drawImage(bg, 0, 0, W, H);
-
       ctx.textAlign = "center";
 
       // ═══════════════════════════════════════════════════════
-      // Faded watermark seal (subtle background element)
+      // Minimal seal — actual Pi² logo as watermark
       // ═══════════════════════════════════════════════════════
-      const sealX = W / 2, sealY = 680, sealR = 90;
+      const sealX = W / 2, sealY = 710, sealR = 70;
       ctx.save();
-      ctx.globalAlpha = 0.16;
-      // Outer circle
-      ctx.strokeStyle = ACCENT;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(sealX, sealY, sealR, 0, Math.PI * 2); ctx.stroke();
-      // Inner circle
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = LAVENDER;
       ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(sealX, sealY, sealR - 14, 0, Math.PI * 2); ctx.stroke();
-      // Starburst rays
-      for (let i = 0; i < 24; i++) {
-        const angle = (i / 24) * Math.PI * 2;
-        const innerR = sealR - 12, outerR = sealR + 4;
+      ctx.beginPath(); ctx.arc(sealX, sealY, sealR, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(sealX, sealY, sealR - 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+
+      // Draw actual logo inside seal
+      const logo = new Image();
+      logo.crossOrigin = "anonymous";
+      logo.onload = () => {
+        ctx.save();
+        ctx.globalAlpha = 0.1;
+        // Clip to inner circle
         ctx.beginPath();
-        ctx.moveTo(sealX + Math.cos(angle) * innerR, sealY + Math.sin(angle) * innerR);
-        ctx.lineTo(sealX + Math.cos(angle) * outerR, sealY + Math.sin(angle) * outerR);
-        ctx.stroke();
-      }
-      // π² text inside seal
-      ctx.globalAlpha = 0.14;
-      ctx.font = "600 48px 'Outfit', sans-serif";
-      ctx.fillStyle = ACCENT;
-      ctx.fillText("π²", sealX, sealY + 16);
-      ctx.restore();
+        ctx.arc(sealX, sealY, sealR - 14, 0, Math.PI * 2);
+        ctx.clip();
+        // Draw logo centered, sized to fit inside seal
+        const logoSize = (sealR - 14) * 1.6;
+        ctx.drawImage(logo, sealX - logoSize / 2, sealY - logoSize / 2, logoSize, logoSize);
+        ctx.restore();
+      };
+      logo.src = "/PI2 logo light.jpeg";
 
       // ═══════════════════════════════════════════════════════
-      // ZONE 1 — Clear zone BETWEEN the two filigree dividers
+      // ZONE 1 — Title area
       // ═══════════════════════════════════════════════════════
 
-      ctx.save();
-      ctx.shadowColor = "rgba(168,85,247,0.5)"; ctx.shadowBlur = 14;
-      ctx.font = "600 30px 'Outfit', sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.fillText("C E R T I F I C A T E", W / 2, 198);
-      ctx.restore();
+      ctx.font = `700 28px ${SANS}`;
+      ctx.fillStyle = CREAM;
+      ctx.letterSpacing = "0.12em";
+      ctx.fillText("C E R T I F I C A T E", W / 2, 200);
 
-      ctx.save();
-      ctx.shadowColor = "rgba(255,45,149,0.4)"; ctx.shadowBlur = 10;
-      ctx.font = "600 14px 'Outfit', sans-serif";
-      ctx.fillStyle = PINK;
-      ctx.fillText("O F   A C H I E V E M E N T", W / 2, 221);
-      ctx.restore();
+      ctx.font = `500 13px ${SANS}`;
+      ctx.fillStyle = LAVENDER;
+      ctx.fillText("O F   A C H I E V E M E N T", W / 2, 226);
 
-      // ═══════════════════════════════════════════════════════
-      // ZONE 2 — Below second filigree divider
-      // ═══════════════════════════════════════════════════════
-
-      ctx.font = "500 13px 'Outfit', sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
-      ctx.fillText("P R O U D L Y   P R E S E N T E D   T O", W / 2, 330);
-
-      // Username — glow pass
-      ctx.save();
-      ctx.shadowColor = "rgba(168,85,247,0.6)"; ctx.shadowBlur = 45;
-      ctx.font = "italic 800 58px 'Georgia', serif";
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.fillText(displayName, W / 2, 392);
-      ctx.restore();
-      // Username — solid pass
-      ctx.save();
-      ctx.shadowColor = "rgba(168,85,247,0.4)"; ctx.shadowBlur = 12;
-      ctx.font = "italic 800 58px 'Georgia', serif";
-      ctx.fillStyle = WHITE;
-      ctx.fillText(displayName, W / 2, 392);
-      ctx.restore();
-
-      // Purple underline beneath name
-      const nameW = ctx.measureText(displayName).width || 200;
-      const lineHalf = Math.min(nameW / 2 + 50, 420);
-      const ulGrad = ctx.createLinearGradient(W / 2 - lineHalf, 0, W / 2 + lineHalf, 0);
-      ulGrad.addColorStop(0, "transparent");
-      ulGrad.addColorStop(0.15, "rgba(168,85,247,0.3)");
-      ulGrad.addColorStop(0.5, ACCENT);
-      ulGrad.addColorStop(0.85, "rgba(168,85,247,0.3)");
-      ulGrad.addColorStop(1, "transparent");
-      ctx.strokeStyle = ulGrad; ctx.lineWidth = 1.8;
+      // Subtle divider line
+      const divW = 200;
+      const divGrad = ctx.createLinearGradient(W / 2 - divW, 0, W / 2 + divW, 0);
+      divGrad.addColorStop(0, "transparent");
+      divGrad.addColorStop(0.3, "rgba(216,210,250,0.2)");
+      divGrad.addColorStop(0.5, "rgba(216,210,250,0.35)");
+      divGrad.addColorStop(0.7, "rgba(216,210,250,0.2)");
+      divGrad.addColorStop(1, "transparent");
+      ctx.strokeStyle = divGrad; ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(W / 2 - lineHalf, 420);
-      ctx.lineTo(W / 2 + lineHalf, 420);
+      ctx.moveTo(W / 2 - divW, 248);
+      ctx.lineTo(W / 2 + divW, 248);
       ctx.stroke();
 
       // ═══════════════════════════════════════════════════════
-      // ZONE 3 — Center content area
+      // ZONE 2 — Presented to + Username
       // ═══════════════════════════════════════════════════════
 
-      ctx.font = "italic 400 24px 'Outfit', sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = `500 12px ${SANS}`;
+      ctx.fillStyle = "rgba(250,249,240,0.35)";
+      ctx.fillText("P R O U D L Y   P R E S E N T E D   T O", W / 2, 310);
+
+      // Username — large, bold, clean
+      ctx.save();
+      ctx.font = `800 52px ${SANS}`;
+      ctx.fillStyle = CREAM;
+      ctx.fillText(displayName, W / 2, 378);
+      ctx.restore();
+
+      // Lavender underline beneath name
+      ctx.font = `800 52px ${SANS}`;
+      const nameW = ctx.measureText(displayName).width || 200;
+      const lineHalf = Math.min(nameW / 2 + 40, 380);
+      const ulGrad = ctx.createLinearGradient(W / 2 - lineHalf, 0, W / 2 + lineHalf, 0);
+      ulGrad.addColorStop(0, "transparent");
+      ulGrad.addColorStop(0.2, "rgba(216,210,250,0.15)");
+      ulGrad.addColorStop(0.5, "rgba(216,210,250,0.5)");
+      ulGrad.addColorStop(0.8, "rgba(216,210,250,0.15)");
+      ulGrad.addColorStop(1, "transparent");
+      ctx.strokeStyle = ulGrad; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - lineHalf, 400);
+      ctx.lineTo(W / 2 + lineHalf, 400);
+      ctx.stroke();
+
+      // ═══════════════════════════════════════════════════════
+      // ZONE 3 — Achievement description
+      // ═══════════════════════════════════════════════════════
+
+      ctx.font = `400 18px ${SANS}`;
+      ctx.fillStyle = "rgba(250,249,240,0.45)";
       const achWords = tier.achievement.split(" ");
-      let achLine = "", achY = 490;
+      let achLine = "", achY = 460;
       achWords.forEach(w => {
         const test = achLine + w + " ";
-        if (ctx.measureText(test).width > 620) {
+        if (ctx.measureText(test).width > 600) {
           ctx.fillText(achLine.trim(), W / 2, achY);
-          achLine = w + " "; achY += 24;
+          achLine = w + " "; achY += 28;
         } else { achLine = test; }
       });
       ctx.fillText(achLine.trim(), W / 2, achY);
 
-      // Tier title
-      const titleY = achY + 70;
-      ctx.save();
-      ctx.shadowColor = "rgba(168,85,247,0.3)"; ctx.shadowBlur = 16;
-      ctx.font = "700 42px 'Outfit', sans-serif";
-      ctx.fillStyle = WHITE;
+      // ═══════════════════════════════════════════════════════
+      // ZONE 4 — Tier title
+      // ═══════════════════════════════════════════════════════
+
+      const titleY = achY + 60;
+      ctx.font = `700 38px ${SANS}`;
+      ctx.fillStyle = LAVENDER;
       ctx.fillText(`${tier.emoji}  ${tier.title}  ${tier.emoji}`, W / 2, titleY);
-      ctx.restore();
 
       // ═══════════════════════════════════════════════════════
-      // ZONE 4 — Score (above seal area)
+      // ZONE 5 — Score stats (monospace, tabular)
       // ═══════════════════════════════════════════════════════
 
-      const scoreY = titleY + 84;
-      ctx.font = "italic 600 18px 'JetBrains Mono', monospace";
-      ctx.fillStyle = CYAN;
+      const scoreY = titleY + 60;
+      ctx.font = `600 16px ${MONO}`;
+      ctx.fillStyle = TEAL;
       ctx.fillText(`${pct}%  ·  ${state.score}/${QUESTIONS.length} correct  ·  Attempt #${state.attempt}`, W / 2, scoreY);
 
       // ═══════════════════════════════════════════════════════
-      // ZONE 5 — Footnote BELOW the seal
+      // Footer
       // ═══════════════════════════════════════════════════════
 
-      ctx.font = "500 12px 'Outfit', sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.fillText("π² Community Quiz  ·  2026", W / 2, 825);
+      ctx.font = `500 11px ${SANS}`;
+      ctx.fillStyle = "rgba(250,249,240,0.18)";
+      ctx.fillText("Pi² Community Quiz  ·  2026", W / 2, 835);
     };
     bg.src = "/certificate-bg.png";
 
@@ -1053,20 +849,20 @@ const CertificateScreen = ({ state, dispatch }) => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "20px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.8s ease-out" }}>
-      <div style={{ maxWidth: 720, width: "100%", textAlign: "center" }}>
-        <h2 style={{ fontFamily: "'Outfit'", fontSize: 28, fontWeight: 800, color: "#F1F5F9", marginBottom: 20 }}>Congratulations 🎉</h2>
-        <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(120,80,220,0.2)", marginBottom: 20, boxShadow: "0 8px 50px rgba(124,58,237,0.15), 0 0 100px rgba(255,45,149,0.05)" }}>
-          {!ready && <div style={{ padding: 40, color: "#64748B", fontSize: 14 }}>Generating certificate...</div>}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px", position: "relative", zIndex: 4, animation: "pi2SlideUp 0.3s ease-out" }}>
+      <div style={{ maxWidth: 680, width: "100%", textAlign: "center" }}>
+        <h2 style={{ fontFamily: BRAND.sans, fontSize: 24, fontWeight: 700, color: BRAND.light, marginBottom: 16 }}>Your Certificate</h2>
+        <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid rgba(250,249,240,0.1)", marginBottom: 16 }}>
+          {!ready && <div style={{ padding: 40, color: "rgba(250,249,240,0.3)", fontSize: 14, fontFamily: BRAND.sans }}>Generating certificate...</div>}
           <canvas ref={canvasRef} style={{ width: "100%", height: "auto", aspectRatio: "14/9", display: ready ? "block" : "none" }} />
         </div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <button onClick={downloadCert} style={{ padding: "14px 28px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#7c3aed,#ff2d95)", color: "white", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 20px rgba(124,58,237,0.3)" }}>↓ Download</button>
-          <button onClick={shareToX} style={{ padding: "14px 28px", borderRadius: 14, background: "rgba(100,50,200,0.1)", border: "1px solid rgba(120,80,220,0.2)", color: "#E2E8F0", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>𝕏 Share to X</button>
-          <button onClick={() => dispatch({ type: "RESTART" })} style={{ padding: "14px 28px", borderRadius: 14, background: "rgba(100,50,200,0.1)", border: "1px solid rgba(120,80,220,0.2)", color: "#E2E8F0", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>↻ Retry Quiz</button>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+          <button onClick={downloadCert} style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: BRAND.lavender, color: BRAND.dark, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>↓ Download</button>
+          <button onClick={shareToX} style={{ padding: "12px 24px", borderRadius: 8, background: "transparent", border: "1px solid rgba(250,249,240,0.12)", color: BRAND.light, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>𝕏 Share to X</button>
+          <button onClick={() => dispatch({ type: "RESTART" })} style={{ padding: "12px 24px", borderRadius: 8, background: "transparent", border: "1px solid rgba(250,249,240,0.12)", color: BRAND.light, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>↻ Retry</button>
         </div>
-        {isRaffleEligible && <div style={{ marginTop: 12 }}>
-          <button onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdKqgvw5NZ6CGts_tOjqwaWrXaAXMU7rhu5iqEF1cID_ycubg/viewform?usp=publish-editor", "_blank")} style={{ width: "100%", padding: "14px 20px", borderRadius: 14, border: "1px solid rgba(255,200,50,0.3)", background: "rgba(255,200,50,0.08)", color: "#fbbf24", fontFamily: "'Outfit'", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>🎁 Enter $5 Raffle</button>
+        {isRaffleEligible && <div style={{ marginTop: 10 }}>
+          <button onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSdKqgvw5NZ6CGts_tOjqwaWrXaAXMU7rhu5iqEF1cID_ycubg/viewform?usp=publish-editor", "_blank")} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid rgba(213,250,211,0.15)", background: "rgba(213,250,211,0.04)", color: BRAND.teal, fontFamily: BRAND.sans, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>🎁 Enter $5 Raffle</button>
         </div>}
       </div>
     </div>
@@ -1079,8 +875,8 @@ export default function Pi2Quiz() {
   useEffect(() => { if (!state.timerActive) return; const i = setInterval(() => dispatch({ type: "TICK" }), 1000); return () => clearInterval(i) }, [state.timerActive]);
   useEffect(() => { if (state.timeLeft === 0 && state.timerActive) dispatch({ type: "TIME_UP" }) }, [state.timeLeft, state.timerActive]);
   return (
-    <div style={{ fontFamily: "'Outfit',sans-serif", minHeight: "100vh", color: "#F1F5F9", position: "relative" }}>
-      <SynthwaveBackground />
+    <div style={{ fontFamily: BRAND.sans, minHeight: "100vh", color: BRAND.light, position: "relative" }}>
+      <MinimalBackground />
       {state.screen === "welcome" && <WelcomeScreen dispatch={dispatch} />}
       {state.screen === "username" && <UsernameScreen state={state} dispatch={dispatch} />}
       {state.screen === "loading" && <LoadingScreen dispatch={dispatch} />}
