@@ -560,10 +560,9 @@ const DiffBadge = ({ difficulty, theme }) => { const dm = getDiffMeta(theme || T
 // SCREENS
 // ═════════════════════════════════════════════════════════════════════════════
 
-const WelcomeScreen = ({ dispatch, theme }) => {
+const WelcomeScreen = ({ dispatch, theme, showRaffle, setShowRaffle }) => {
   const t = theme;
   const isDark = t.mode === "dark";
-  const [showRaffle, setShowRaffle] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 480);
 
   useEffect(() => {
@@ -625,8 +624,8 @@ const WelcomeScreen = ({ dispatch, theme }) => {
         {/* ── TITLE ── */}
         <h1 style={{
           fontFamily: BRAND.sans, fontSize: "clamp(32px,7vw,44px)", fontWeight: 800,
-          color: t.pageText, lineHeight: 1.05, marginBottom: 24,
-          letterSpacing: "-0.03em",
+          color: t.pageText, lineHeight: 1.0, marginBottom: 24,
+          letterSpacing: "-0.04em",
           animation: "pi2SlideUp 0.4s ease-out",
         }}>COMMUNITY<br />QUIZ</h1>
 
@@ -649,81 +648,12 @@ const WelcomeScreen = ({ dispatch, theme }) => {
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = t.cardBorder }}
             >
               <div style={{ fontFamily: BRAND.mono, fontSize: 22, fontWeight: 700, color: BRAND.light, marginBottom: 4 }}>{v}</div>
-              <div style={{ fontSize: 11, color: "rgba(250,249,240,0.4)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>{l}</div>
+              <div style={{ fontSize: 11, color: "rgba(250,249,240,0.4)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{l}</div>
             </div>
           ))}
         </div>
 
-        {/* ── Floating raffle FAB (bottom-right fixed, mobile-safe) ── */}
-        <div style={{
-          position: "fixed", bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 50,
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-        }}>
-          {/* Popup tooltip */}
-          {showRaffle && (
-            <>
-              {/* Click-outside overlay */}
-              <div onClick={() => setShowRaffle(false)} style={{
-                position: "fixed", inset: 0, zIndex: 49,
-              }} />
-              <div style={{
-                position: "absolute", bottom: "calc(100% + 14px)", right: 0,
-                background: t.cardBg, border: `1px solid ${t.tealBorder}`,
-                borderRadius: 12, padding: "16px 20px", minWidth: isMobile ? 220 : 260, maxWidth: isMobile ? "calc(100vw - 40px)" : 300,
-                textAlign: "center", zIndex: 51,
-                boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.5)" : "0 8px 32px rgba(0,0,0,0.2)",
-                animation: "pi2SlideUp 0.2s ease-out",
-              }}>
-                {/* Arrow */}
-                <div style={{
-                  position: "absolute", bottom: -6, right: 22, transform: "rotate(45deg)",
-                  width: 12, height: 12, background: t.cardBg,
-                  borderRight: `1px solid ${t.tealBorder}`, borderBottom: `1px solid ${t.tealBorder}`,
-                }} />
-                <div style={{ fontSize: 24, marginBottom: 8 }}>🎁</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: BRAND.teal, marginBottom: 6, fontFamily: BRAND.sans }}>$5 Raffle Entry</div>
-                <div style={{ fontSize: 13, color: "rgba(250,249,240,0.6)", lineHeight: 1.6, fontFamily: BRAND.sans }}>
-                  Score <strong style={{ color: BRAND.teal }}>81% or higher</strong> on your very first attempt to automatically enter our $5 raffle draw!
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* FAB button with ring pulse */}
-          <div style={{ position: "relative" }}>
-            {/* Ring pulse beacon */}
-            {!showRaffle && <div style={{
-              position: "absolute", inset: -4,
-              borderRadius: "50%",
-              border: `2px solid ${isDark ? BRAND.teal : "#2D7A3A"}`,
-              animation: "ringPulse 2s ease-out infinite",
-            }} />}
-            <button
-              onClick={() => setShowRaffle(!showRaffle)}
-              style={{
-                width: isMobile ? 48 : 56, height: isMobile ? 48 : 56, borderRadius: "50%",
-                background: t.cardBg, border: `1px solid ${t.tealBorder}`,
-                cursor: "pointer", fontSize: isMobile ? 24 : 28, lineHeight: 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                animation: showRaffle ? "none" : "giftPulse 2s ease-in-out infinite",
-                boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.15)",
-                transition: "transform 0.2s ease",
-                position: "relative", zIndex: 51,
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
-              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-              aria-label="Raffle info"
-            >🎁</button>
-          </div>
-
-          {/* Label */}
-          {!showRaffle && <span style={{
-            fontSize: 10, fontWeight: 700, color: isDark ? BRAND.teal : "#2D7A3A",
-            fontFamily: BRAND.sans, letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            animation: "pi2FadeIn 0.5s ease",
-          }}>Win $5!</span>}
-        </div>
+        {/* ── Floating raffle FAB removed from here ── */}
 
         {/* ── CTA BUTTON with gradient + edge-lit border ── */}
         <button onClick={() => dispatch({ type: "START_QUIZ" })}
@@ -733,8 +663,8 @@ const WelcomeScreen = ({ dispatch, theme }) => {
             borderTop: `1px solid rgba(255,255,255,0.25)`,
             background: `linear-gradient(135deg, ${BRAND.lavender} 0%, #C8BEF5 100%)`,
             color: BRAND.dark,
-            fontFamily: BRAND.sans, fontSize: 17, fontWeight: 700,
-            cursor: "pointer", transition: "all 0.2s ease", letterSpacing: 0.3,
+            fontFamily: BRAND.sans, fontSize: 16, fontWeight: 700,
+            cursor: "pointer", transition: "all 0.2s ease", letterSpacing: "0.01em",
             boxShadow: `0 6px 32px ${isDark ? "rgba(216,210,250,0.2)" : "rgba(216,210,250,0.35)"}`,
             animation: "pi2SlideUp 0.6s ease-out",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -831,7 +761,7 @@ const LoadingScreen = ({ dispatch, theme }) => {
       </div>
       <div style={{ textAlign: "center" }}>
         {phase === 0 && <p style={{ fontFamily: BRAND.sans, fontSize: 16, fontWeight: 400, color: t.mutedText }}>Preparing your challenge{dots}</p>}
-        {phase >= 1 && <p style={{ fontFamily: BRAND.sans, fontSize: 24, fontWeight: 700, color: BRAND.lavender, animation: "pi2SlideUp 0.2s ease-out", letterSpacing: "0.05em" }}>READY</p>}
+        {phase >= 1 && <p style={{ fontFamily: BRAND.sans, fontSize: 24, fontWeight: 700, color: t.mode === "dark" ? BRAND.lavender : BRAND.dark, animation: "pi2SlideUp 0.2s ease-out", letterSpacing: "0.05em" }}>READY</p>}
       </div>
       <div style={{ width: 160, height: 2, borderRadius: 1, marginTop: 24, background: t.faintBg, overflow: "hidden" }}>
         <div style={{ height: "100%", borderRadius: 1, background: BRAND.lavender, animation: "loadBarFill 2.8s ease-out forwards" }} />
@@ -1085,7 +1015,7 @@ const ResultScreen = ({ state, dispatch, theme }) => {
         {!isNewBest && prevBestPct !== null && <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 12px", borderRadius: 6, fontSize: 11, fontWeight: 500, color: "rgba(250,249,240,0.35)", background: t.badgeBg, border: "1px solid rgba(250,249,240,0.08)", marginBottom: 8 }}>Personal Best: <span style={{ fontFamily: BRAND.mono, fontWeight: 600, color: BRAND.lavender }}>{prevBestPct}%</span></div>}
         <p style={{ fontSize: 14, color: "rgba(250,249,240,0.4)", lineHeight: 1.6, maxWidth: 360, margin: "0 auto 24px", fontFamily: BRAND.sans }}>{tier.message}</p>
         <div className="pi2-score-ring" style={{ position: "relative", width: 120, height: 120, margin: "0 auto 24px" }}>
-          <svg width={120} height={120} style={{ transform: "rotate(-90deg)" }}>
+          <svg width="100%" height="100%" viewBox="0 0 120 120" style={{ transform: "rotate(-90deg)", overflow: "visible" }}>
             <circle cx={60} cy={60} r={52} fill="none" stroke="rgba(250,249,240,0.04)" strokeWidth={6} />
             <circle cx={60} cy={60} r={52} fill="none" stroke={BRAND.lavender} strokeWidth={6} strokeDasharray={2 * Math.PI * 52} strokeDashoffset={2 * Math.PI * 52 * (1 - animPct / 100)} strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.1s linear" }} />
           </svg>
@@ -1420,21 +1350,75 @@ export default function Pi2Quiz() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { soundEnabled, toggleSound } = useSoundToggle();
   const { mode, theme, toggleTheme } = useTheme();
+  // Lift showRaffle state up so the TopNav toggle works
+  const [showRaffle, setShowRaffle] = useState(false);
+
   useEffect(() => { injectStyles() }, []);
   useEffect(() => { if (!state.timerActive) return; const i = setInterval(() => dispatch({ type: "TICK" }), 1000); return () => clearInterval(i) }, [state.timerActive]);
   useEffect(() => { if (state.timeLeft === 0 && state.timerActive) dispatch({ type: "TIME_UP" }) }, [state.timeLeft, state.timerActive]);
   return (
     <div style={{ fontFamily: BRAND.sans, minHeight: "100vh", color: theme.pageText, position: "relative", transition: "color 0.3s ease" }}>
       <MinimalBackground theme={theme} />
-      {/* ── Top-right controls: theme toggle + sound toggle ── */}
-      <div style={{ position: "fixed", top: 16, right: 16, zIndex: 10, display: "flex", gap: 8 }}>
+      {/* ── Top-right controls: raffle + theme toggle + sound toggle ── */}
+      <div style={{ position: "fixed", top: 16, right: 16, zIndex: 10, display: "flex", gap: 8, alignItems: "center" }}>
+
+        {/* Toggle Raffle Info Button (Original design, scaled down) */}
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          {showRaffle && (
+            <>
+              <div onClick={() => setShowRaffle(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
+              <div style={{
+                position: "absolute", top: "calc(100% + 14px)", right: 0,
+                background: theme.cardBg, border: `1px solid ${theme.tealBorder}`,
+                borderRadius: 12, padding: "16px 20px", width: 260, maxWidth: "calc(100vw - 40px)",
+                textAlign: "left", zIndex: 51,
+                boxShadow: mode === "dark" ? "0 8px 32px rgba(0,0,0,0.5)" : "0 8px 32px rgba(0,0,0,0.2)",
+                animation: "pi2SlideUp 0.2s ease-out",
+              }}>
+                <div style={{ position: "absolute", top: -6, right: 28, transform: "rotate(45deg)", width: 12, height: 12, background: theme.cardBg, borderLeft: `1px solid ${theme.tealBorder}`, borderTop: `1px solid ${theme.tealBorder}` }} />
+                <div style={{ fontSize: 24, marginBottom: 8 }}>🎁</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: BRAND.teal, marginBottom: 6, fontFamily: BRAND.sans }}>$5 Raffle Entry</div>
+                <div style={{ fontSize: 13, color: "rgba(250,249,240,0.6)", lineHeight: 1.6, fontFamily: BRAND.sans }}>
+                  Score <strong style={{ color: BRAND.teal }}>81% or higher</strong> on your very first attempt to automatically enter our $5 raffle draw!
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* FAB button with ring pulse */}
+          <div style={{ position: "relative" }}>
+            {!showRaffle && <div style={{
+              position: "absolute", inset: -4,
+              borderRadius: "50%",
+              border: `2px solid ${mode === "dark" ? BRAND.teal : "#2D7A3A"}`,
+              animation: "ringPulse 2s ease-out infinite",
+            }} />}
+            <button
+              onClick={() => setShowRaffle(!showRaffle)}
+              style={{
+                width: 44, height: 44, borderRadius: "50%",
+                background: theme.cardBg, border: `1px solid ${theme.tealBorder}`,
+                cursor: "pointer", fontSize: 22, lineHeight: 1,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                animation: showRaffle ? "none" : "giftPulse 2s ease-in-out infinite",
+                boxShadow: mode === "dark" ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.15)",
+                transition: "transform 0.2s ease",
+                position: "relative", zIndex: 51,
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+              aria-label="Raffle info"
+            >🎁</button>
+          </div>
+        </div>
+
         <button onClick={toggleTheme} title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${theme.faintBorder}`, background: theme.faintBg, color: theme.pageText, cursor: "pointer", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s ease", opacity: 0.7 }} onMouseEnter={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.background = theme.faintBg }} onMouseLeave={e => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.background = theme.faintBg }}>{mode === "dark" ? "☀️" : "🌙"}</button>
         <button onClick={toggleSound} title={soundEnabled ? "Mute sounds" : "Enable sounds"} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${theme.faintBorder}`, background: theme.faintBg, color: soundEnabled ? theme.pageText : theme.subtleText, cursor: "pointer", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s ease", opacity: 0.7 }} onMouseEnter={e => { e.currentTarget.style.opacity = "1" }} onMouseLeave={e => { e.currentTarget.style.opacity = "0.7" }}>{soundEnabled ? "🔊" : "🔇"}</button>
       </div>
       <ScreenTransition screenKey={state.screen}>
         {(activeScreen) => (
           <>
-            {activeScreen === "welcome" && <WelcomeScreen dispatch={dispatch} theme={theme} />}
+            {activeScreen === "welcome" && <WelcomeScreen dispatch={dispatch} theme={theme} showRaffle={showRaffle} setShowRaffle={setShowRaffle} />}
             {activeScreen === "username" && <UsernameScreen state={state} dispatch={dispatch} theme={theme} />}
             {activeScreen === "loading" && <LoadingScreen dispatch={dispatch} theme={theme} />}
             {activeScreen === "quiz" && <QuizScreen state={state} dispatch={dispatch} theme={theme} />}
