@@ -760,7 +760,7 @@ const LoadingScreen = ({ dispatch, theme }) => {
         />
       </div>
       <div style={{ textAlign: "center", minHeight: 36 }}>
-        {phase === 0 && <p style={{ fontFamily: BRAND.sans, fontSize: 16, fontWeight: 400, color: t.mutedText }}>Preparing your challenge{dots}</p>}
+        <p style={{ fontFamily: BRAND.sans, fontSize: 16, fontWeight: 400, color: t.mutedText }}>Preparing your challenge{dots}</p>
       </div>
       <div style={{ width: 160, height: 2, borderRadius: 1, marginTop: 24, background: t.faintBg, overflow: "hidden" }}>
         <div style={{ height: "100%", borderRadius: 1, background: BRAND.lavender, animation: "loadBarFill 2.8s ease-out forwards" }} />
